@@ -4,30 +4,18 @@ import Logger
 
 // MARK: - Public types
 
-public typealias HealthCoreProviderAuthorizationErrorHandler = (HealthCoreProviderAuthorizationError) -> ()
-public typealias HealthCoreProviderReadingDataErrorHandler = (HealthCoreProviderReadingDataError) -> ()
-public typealias HealthCoreProviderWritingDataErrorHandler = (HealthCoreProviderWritingDataError) -> ()
+public typealias AuthorizationErrorHandler = () -> ()
+public typealias ReadingErrorHandler = () -> ()
+public typealias WritingErrorHandler = () -> ()
 
-public enum HealthCoreProviderAuthorizationError {
-    case unsuccessfulAuthorization
-}
-
-public enum HealthCoreProviderWritingDataError {
-    case unsuccessfulWriting
-}
-
-public enum HealthCoreProviderReadingDataError {
-    case unsuccessfulReading
-}
-
-// MARK: - HealthCore
+// MARK: - HealthCoreProvider
 
 public final class HealthCoreProvider {
 
     // MARK: - Private properties
 
     private let healthStore: HKHealthStore = HKHealthStore()
-    private let dataTypesToRead: Set<HKObjectType>
+    private let dataTypesToRead: Set<HKSampleType>
     private let dataTypesToWrite: Set<HKSampleType>
 
     // MARK: - Public init
@@ -40,24 +28,85 @@ public final class HealthCoreProvider {
         self.dataTypesToWrite = dataTypesToWrite
     }
 
+}
+
+// MARK: - Writing data
+
+extension HealthCoreProvider {
+
     // MARK: - Public methods
 
     /// Writes data to HealthStore.
     public func writeData(
         data: [HKSample],
-        objectType: HKObjectType,
-        writingErrorHandler: HealthCoreProviderWritingDataErrorHandler,
-        authorizationErrorHandler: HealthCoreProviderAuthorizationErrorHandler
+        sampleType: HKSampleType,
+        writingErrorHandler: WritingErrorHandler,
+        authorizationErrorHandler: AuthorizationErrorHandler
     ) async {
-        if await isWritePermissionGranted(for: objectType, authorizationErrorHandler: authorizationErrorHandler) {
-            await writeDataToHealthStore(
-                data: data,
-                writingErrorHandler: writingErrorHandler
+        guard await isWritePermissionGranted(for: sampleType, authorizationErrorHandler: authorizationErrorHandler) else {
+            return
+        }
+        await writeDataToHealthStore(
+            data: data,
+            writingErrorHandler: writingErrorHandler
+        )
+    }
+
+    // MARK: - Private methods
+
+    /// Checks if permission to save data in HealthStore was granted by user.
+    private func isWritePermissionGranted(
+        for objectType: HKObjectType,
+        authorizationErrorHandler: AuthorizationErrorHandler
+    ) async -> Bool {
+        let authorizationStatus = healthStore.authorizationStatus(for: objectType)
+        switch authorizationStatus {
+        case .sharingAuthorized:
+            Logger.logEvent(
+                "Permission to write to HealthStore was granted by user. Successful authorization.",
+                type: .success
             )
-        } else {
-            authorizationErrorHandler(.unsuccessfulAuthorization)
+            return true
+        default:
+            Logger.logEvent(
+                "There is no permission to write to HealthStore. Authorization status: `\(authorizationStatus.description)`. Starting authorization request...",
+                type: .warning
+            )
+            await makeAuthorizationRequest(authorizationErrorHandler: authorizationErrorHandler)
+            if healthStore.authorizationStatus(for: objectType) == .sharingAuthorized {
+                Logger.logEvent("Succesfull HealthStore authorization.", type: .success)
+                return true
+            }
+            Logger.logEvent(
+                "Permission to write to HealthStore was denied by user.",
+                type: .warning
+            )
+            authorizationErrorHandler()
+            return false
         }
     }
+
+    /// Saves data to HealthStore.
+    private func writeDataToHealthStore(
+        data: [HKSample],
+        writingErrorHandler: WritingErrorHandler
+    ) async {
+        do {
+            try await healthStore.save(data)
+        } catch {
+            Logger.logEvent("Unuccessfully wrote data to HealthStore.", type: .error)
+            writingErrorHandler()
+        }
+        Logger.logEvent("Successfully wrote data to HealthStore.", type: .success)
+    }
+
+}
+
+// MARK: - Reading data
+
+extension HealthCoreProvider {
+
+    // MARK: - Public methods
 
     /// Reads data from HealthStore.
     public func readData(
@@ -66,7 +115,7 @@ public final class HealthCoreProvider {
         ascending: Bool,
         limit: Int,
         queryOptions: HKQueryOptions?,
-        authorizationErrorHandler: HealthCoreProviderAuthorizationErrorHandler
+        authorizationErrorHandler: AuthorizationErrorHandler
     ) async -> (HKSampleQuery?, [HKSample]?, Error?) {
 
         // TODO: - ErrorHandler
@@ -90,63 +139,15 @@ public final class HealthCoreProvider {
         } catch {
             return (nil, nil, error)
         }
-
         return data
-
     }
 
     // MARK: - Private methods
 
-    /// Checks if permission to save data in HealthStore was granted by user.
-    private func isWritePermissionGranted(
-        for objectType: HKObjectType,
-        authorizationErrorHandler: HealthCoreProviderAuthorizationErrorHandler
-    ) async -> Bool {
-        let authorizationStatus = healthStore.authorizationStatus(for: objectType)
-        switch authorizationStatus {
-        case .sharingAuthorized:
-            Logger.logEvent(
-                "Permission to write to HealthStore was granted by user. Successful authorization.",
-                type: .success
-            )
-            return true
-        default:
-            Logger.logEvent(
-                "There is no permission to write to HealthStore. Authorization status: `\(authorizationStatus.description)`. Starting authorization request...",
-                type: .warning
-            )
-            await makeAuthorizationRequest(authorizationErrorHandler: authorizationErrorHandler)
-            /* Checking authorization status after successful authorization request */
-            if healthStore.authorizationStatus(for: objectType) == .sharingAuthorized {
-                Logger.logEvent("Succesfull HealthStore authroization.", type: .success)
-                return true
-            }
-            Logger.logEvent(
-                "Permission to write to HealthStore was denied by user.",
-                type: .warning
-            )
-            return false
-        }
-    }
-
-    /// Saves data to HealthStore.
-    private func writeDataToHealthStore(
-        data: [HKSample],
-        writingErrorHandler: HealthCoreProviderWritingDataErrorHandler
-    ) async {
-        do {
-            try await healthStore.save(data)
-        } catch {
-            Logger.logEvent("Unuccessfully wrote data to HealthStore.", type: .error)
-            writingErrorHandler(.unsuccessfulWriting)
-        }
-        Logger.logEvent("Successfully wrote data to HealthStore.", type: .success)
-    }
-
     /// Checks if permission to read data from HealthStore was granted by user.
     private func isReadPermissionGranted(
         for sampleType: HKSampleType,
-        authorizationErrorHandler: HealthCoreProviderAuthorizationErrorHandler
+        authorizationErrorHandler: AuthorizationErrorHandler
     ) async -> Bool {
         var lastData: (HKSampleQuery?, [HKSample]?, Error?)
         do { lastData = try await readLastData(for: sampleType) } catch {
@@ -208,8 +209,14 @@ public final class HealthCoreProvider {
         )
     }
 
+}
+
+// MARK: - Common
+
+extension HealthCoreProvider {
+
     private func makeAuthorizationRequest(
-        authorizationErrorHandler: HealthCoreProviderAuthorizationErrorHandler
+        authorizationErrorHandler: AuthorizationErrorHandler
     ) async {
         do {
             try await healthStore.requestAuthorization(
@@ -218,7 +225,7 @@ public final class HealthCoreProvider {
             )
         } catch {
             Logger.logEvent("Unsuccessful HealthKit authorization request.", type: .error)
-            authorizationErrorHandler(.unsuccessfulAuthorization)
+            authorizationErrorHandler()
         }
     }
 
