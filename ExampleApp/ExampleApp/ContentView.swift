@@ -1,6 +1,7 @@
 import SwiftUI
 import HealthCore
 import HealthKit
+import Logger
 
 struct ContentView: View {
 
@@ -40,22 +41,12 @@ struct ContentView: View {
             ],
             dataTypesToWrite: [
                 HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
-            ],
-            healthCoreProviderErrorHandler: { error in
-                switch error {
-                case .unsuccessfulAuthorizationError:
-                    print("unsuccessfulAuthorizationError")
-                case .unsuccessfulSavingDataToHealthStore:
-                    print("unsuccessfulSavingDataToHealthStore")
-                case .unsuccessfulWritingDataToHealthStore:
-                    print("unsuccessfulWritingDataToHealthStore")
-                }
-            }
+            ]
         )
     }
 
     private func readData() async {
-        print("reading data...")
+        Logger.logEvent("Start reading data...", type: .info)
     }
 
     private func writeData() async {
@@ -68,7 +59,15 @@ struct ContentView: View {
                     end: Date()
                 )
             ],
-            objectType: HKSampleType.categoryType(forIdentifier: .sleepAnalysis)!
+            objectType: HKSampleType.categoryType(forIdentifier: .sleepAnalysis)!,
+            errorHandler: { error in
+                switch error {
+                case .unsuccessfulAuthorization:
+                    break
+                case .unsuccessfulWritingData:
+                    break
+                }
+            }
         )
     }
 
