@@ -12,6 +12,7 @@
 		D97B38A027C3647800B61A19 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D97B389F27C3647800B61A19 /* Assets.xcassets */; };
 		D97B38A327C3647800B61A19 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D97B38A227C3647800B61A19 /* Preview Assets.xcassets */; };
 		D97B38AD27C366AF00B61A19 /* HealthCore in Frameworks */ = {isa = PBXBuildFile; productRef = D97B38AC27C366AF00B61A19 /* HealthCore */; };
+		D97B38CF27C38BAA00B61A19 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D97B38CE27C38BAA00B61A19 /* HealthKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,8 @@
 		D97B389F27C3647800B61A19 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D97B38A227C3647800B61A19 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D97B38AA27C3648E00B61A19 /* HealthCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = HealthCore; path = ..; sourceTree = "<group>"; };
+		D97B38CD27C38BA900B61A19 /* ExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ExampleApp.entitlements; sourceTree = "<group>"; };
+		D97B38CE27C38BAA00B61A19 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +32,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D97B38AD27C366AF00B61A19 /* HealthCore in Frameworks */,
+				D97B38CF27C38BAA00B61A19 /* HealthKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +60,7 @@
 		D97B389A27C3647700B61A19 /* ExampleApp */ = {
 			isa = PBXGroup;
 			children = (
+				D97B38CD27C38BA900B61A19 /* ExampleApp.entitlements */,
 				D97B389B27C3647700B61A19 /* ExampleApp.swift */,
 				D97B389D27C3647700B61A19 /* ContentView.swift */,
 				D97B389F27C3647800B61A19 /* Assets.xcassets */,
@@ -83,6 +88,7 @@
 		D97B38AB27C366AF00B61A19 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D97B38CE27C38BAA00B61A19 /* HealthKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -289,6 +295,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ExampleApp/ExampleApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ExampleApp/Preview Content\"";
@@ -320,6 +327,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ExampleApp/ExampleApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ExampleApp/Preview Content\"";
