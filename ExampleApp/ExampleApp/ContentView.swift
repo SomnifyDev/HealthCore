@@ -9,6 +9,7 @@ struct ContentView: View {
 
     @State private var shouldShowUnsuccessfulAuthorizationErrorAlert: Bool = false
     @State private var shouldShowUnsuccessfulWritingErrorAlert: Bool = false
+    @State private var shouldShowUnsuccessfulReadingErrorAlert: Bool = false
     private let healthCoreProvider: HealthCoreProvider
 
     // MARK: - Internal properties
@@ -29,50 +30,76 @@ struct ContentView: View {
             Button {
                 Task { await writeData() }
             } label: {
-                Text("Tap to write data to health store!")
+                Label {
+                    Text("Write data to HealthStore")
+                } icon: {
+                    Image(systemName: "arrow.up.heart.fill")
+                        .foregroundColor(.red)
+                }
             }
             .buttonStyle(.borderedProminent)
-            .alert("Error during health kit authorization", isPresented: $shouldShowUnsuccessfulAuthorizationErrorAlert) {
-                Button("OK", role: .cancel) { }
-            }
             .padding(.horizontal)
 
             Button {
                 Task { await readData() }
             } label: {
-                Text("Tap to read data from health store!")
+                Label {
+                    Text("Read data from HealthStore")
+                } icon: {
+                    Image(systemName: "arrow.down.heart.fill")
+                        .foregroundColor(.red)
+                }
             }
             .buttonStyle(.borderedProminent)
-            .alert("Error during health kit authorization", isPresented: $shouldShowUnsuccessfulAuthorizationErrorAlert) {
-                Button("OK", role: .cancel) { }
-            }
             .padding(.horizontal)
 
             Spacer()
+        }
+        .alert("Error during HealthStore authorization", isPresented: $shouldShowUnsuccessfulAuthorizationErrorAlert) {
+            Button("OK", role: .cancel) { }
+        }
+        .alert("Error during reading from HealthStore", isPresented: $shouldShowUnsuccessfulReadingErrorAlert) {
+            Button("OK", role: .cancel) { }
+        }
+        .alert("Error during writing to HealthStore", isPresented: $shouldShowUnsuccessfulWritingErrorAlert) {
+            Button("OK", role: .cancel) { }
         }
     }
 
     // MARK: - Init
 
     init() {
+        let neededDataTypes: Set<HKSampleType> = [
+            HKQuantityType(.heartRate),
+            HKQuantityType(.activeEnergyBurned),
+            HKCategoryType(.sleepAnalysis)
+        ]
         self.healthCoreProvider = HealthCoreProvider(
-            dataTypesToRead: [
-                HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!,
-                HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.activeEnergyBurned)!,
-                HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
-            ],
-            dataTypesToWrite: [
-                HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!,
-                HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.activeEnergyBurned)!,
-                HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!
-            ]
+            dataTypesToRead: neededDataTypes,
+            dataTypesToWrite: neededDataTypes
         )
     }
 
     // MARK: - Private properties
 
     private func readData() async {
-        Logger.logEvent("Start reading data...", type: .info)
+        let data = await healthCoreProvider.readData(
+            sampleType: HKQuantityType(.heartRate),
+            dateInterval: DateInterval(
+                start: Date.distantPast,
+                end: Date.distantFuture
+            ),
+            ascending: false,
+            limit: 10,
+            queryOptions: [],
+            readingErrorHandler: {
+                shouldShowUnsuccessfulReadingErrorAlert.toggle()
+            },
+            authorizationErrorHandler: {
+                shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+            }
+        )
+        print(data?.description ?? "")
     }
 
     private func writeData() async {
@@ -83,9 +110,14 @@ struct ContentView: View {
                     value: HKCategoryValueSleepAnalysis.asleep.rawValue,
                     start: Date(),
                     end: Date()
+                ),
+                HKQuantitySample(
+                    type: HKQuantityType(.heartRate),
+                    quantity: HKQuantity(unit: .countMin(), doubleValue: 55.0),
+                    start: Date(),
+                    end: Date()
                 )
             ],
-            sampleType: HKSampleType.categoryType(forIdentifier: .sleepAnalysis)!,
             writingErrorHandler: {
                 shouldShowUnsuccessfulWritingErrorAlert.toggle()
             },
