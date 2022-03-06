@@ -33,7 +33,6 @@ public final class HealthCoreProvider {
 
         static func ==(lhs: SampleType, rhs: HKSample) -> Bool {
             switch (lhs, rhs) {
-
             case (.quantityType(_), rhs):
                 return lhs.sampleType == rhs.sampleType
             case (let .categoryType(_, categoryValue), rhs):
