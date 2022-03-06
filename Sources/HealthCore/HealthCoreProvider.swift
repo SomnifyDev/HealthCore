@@ -15,6 +15,9 @@ public enum HealthCoreError: Error {
 // MARK: - HealthCoreProvider
 
 public final class HealthCoreProvider {
+
+    // MARK: - Public types
+    
     public enum SampleType: Hashable {
         case quantityType(forIdentifier: HKQuantityTypeIdentifier)
         case categoryType(forIdentifier: HKCategoryTypeIdentifier, categoryValue: Int)
