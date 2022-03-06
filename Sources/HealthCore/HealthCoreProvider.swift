@@ -138,7 +138,7 @@ extension HealthCoreProvider {
             switch self {
             case .concrete(let identifiers):
                 return identifiers
-            default:
+            case .all:
                 return Set()
             }
         }
@@ -237,7 +237,8 @@ extension HealthCoreProvider {
         ascending: Bool,
         limit: Int,
         author: BundleAuthor,
-        queryOptions: HKQueryOptions
+        queryOptions: HKQueryOptions,
+        isPermissionChecking: Bool = false
     ) async throws -> [HKSample]? {
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(
@@ -253,7 +254,7 @@ extension HealthCoreProvider {
                 if let error = error {
                     continuation.resume(throwing: error)
                 } else {
-                    let samplesFiltered = data?.filter { sample in
+                    let samplesFiltered = isPermissionChecking ? data : data?.filter { sample in
                         (author.bundles.isEmpty || (author.bundles.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) }))) &&
                         sampleType == sample
                     }
@@ -278,10 +279,10 @@ extension HealthCoreProvider {
             ascending: false,
             limit: 1,
             author: .all,
-            queryOptions: []
+            queryOptions: [],
+            isPermissionChecking: true
         )
     }
-
 }
 
 // MARK: - Common
