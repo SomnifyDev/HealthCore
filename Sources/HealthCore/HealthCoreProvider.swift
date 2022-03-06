@@ -6,6 +6,12 @@ import Logger
 
 public typealias ErrorHandler = () -> ()
 
+public enum HealthCoreError: Error {
+    case writingErrorHandler
+    case readingErrorHandler
+    case authorizationErrorHandler
+}
+
 // MARK: - HealthCoreProvider
 
 public final class HealthCoreProvider {
@@ -64,18 +70,15 @@ extension HealthCoreProvider {
         data: [HKSample],
         writingErrorHandler: ErrorHandler,
         authorizationErrorHandler: ErrorHandler
-    ) async {
+    ) async throws {
         guard
             HKHealthStore.isHealthDataAvailable(),
             let sampleType = data.first?.sampleType,
-            await isWritePermissionGranted(
-                for: sampleType,
-                authorizationErrorHandler: authorizationErrorHandler
-            )
+            try await isWritePermissionGranted(for: sampleType)
         else {
             return
         }
-        await writeDataToHealthStore(
+        try await writeDataToHealthStore(
             data: data,
             writingErrorHandler: writingErrorHandler
         )
@@ -85,9 +88,8 @@ extension HealthCoreProvider {
 
     /// Checks if permission to save data in `HealthStore` was granted by user.
     private func isWritePermissionGranted(
-        for objectType: HKObjectType,
-        authorizationErrorHandler: ErrorHandler
-    ) async -> Bool {
+        for objectType: HKObjectType
+    ) async throws -> Bool {
         let authorizationStatus = healthStore.authorizationStatus(for: objectType)
         switch authorizationStatus {
         case .sharingAuthorized:
@@ -101,7 +103,7 @@ extension HealthCoreProvider {
                 "There is no permission to write to HealthStore. Authorization status: `\(authorizationStatus.description)`. Starting authorization request...",
                 type: .warning
             )
-            await makeAuthorizationRequest(authorizationErrorHandler: authorizationErrorHandler)
+            try await makeAuthorizationRequest()
             if healthStore.authorizationStatus(for: objectType) == .sharingAuthorized {
                 Logger.logEvent("Succesfull HealthStore authorization.", type: .success)
                 return true
@@ -110,8 +112,7 @@ extension HealthCoreProvider {
                 "Permission to write to HealthStore was denied by user.",
                 type: .warning
             )
-            authorizationErrorHandler()
-            return false
+            throw HealthCoreError.authorizationErrorHandler
         }
     }
 
@@ -119,12 +120,12 @@ extension HealthCoreProvider {
     private func writeDataToHealthStore(
         data: [HKSample],
         writingErrorHandler: ErrorHandler
-    ) async {
+    ) async throws {
         do {
             try await healthStore.save(data)
         } catch {
             Logger.logEvent("Unuccessfully wrote data to HealthStore.", type: .error)
-            writingErrorHandler()
+            throw HealthCoreError.writingErrorHandler
         }
         Logger.logEvent("Successfully wrote data to HealthStore.", type: .success)
     }
@@ -171,55 +172,39 @@ extension HealthCoreProvider {
         queryOptions: HKQueryOptions,
         readingErrorHandler: ErrorHandler,
         authorizationErrorHandler: ErrorHandler
-    ) async -> [HKSample]? {
+    ) async throws -> [HKSample]? {
         guard
             HKHealthStore.isHealthDataAvailable(),
-            await isReadPermissionGranted(
-                for: sampleType,
-                readingErrorHandler: readingErrorHandler,
-                authorizationErrorHandler: authorizationErrorHandler
-            )
+            try await isReadPermissionGranted(for: sampleType)
         else {
             return nil
         }
-        var data: [HKSample]?
-        do {
-            data = try await readDataFromHealthStore(
-                sampleType: sampleType,
-                dateInterval: dateInterval,
-                ascending: ascending,
-                limit: limit,
-                author: author,
-                queryOptions: queryOptions
-            )
-        } catch {
-            return nil
-        }
-        return data
+        return try await readDataFromHealthStore(
+            sampleType: sampleType,
+            dateInterval: dateInterval,
+            ascending: ascending,
+            limit: limit,
+            author: author,
+            queryOptions: queryOptions
+        )
     }
 
     // MARK: - Private methods
 
     /// Checks if permission to read data from `HealthStore` was granted by user.
-    private func isReadPermissionGranted(
-        for sampleType: SampleType,
-        readingErrorHandler: ErrorHandler,
-        authorizationErrorHandler: ErrorHandler
-    ) async -> Bool {
+    private func isReadPermissionGranted(for sampleType: SampleType) async throws -> Bool {
         guard
-            await !isAbleToReadData(
+            try await !isAbleToReadData(
                 sampleType: sampleType,
-                readingErrorHandler: readingErrorHandler,
                 shouldThrowError: false
             )
         else {
             return true
         }
-        await makeAuthorizationRequest(authorizationErrorHandler: authorizationErrorHandler)
+        try await makeAuthorizationRequest()
         guard
-            await !isAbleToReadData(
+            try await !isAbleToReadData(
                 sampleType: sampleType,
-                readingErrorHandler: readingErrorHandler,
                 shouldThrowError: true
             )
         else {
@@ -231,9 +216,8 @@ extension HealthCoreProvider {
     /// Tries to get the last data from `HealthStore` to determine if there is an ability to read data at all.
     private func isAbleToReadData(
         sampleType: SampleType,
-        readingErrorHandler: ErrorHandler,
         shouldThrowError: Bool
-    ) async -> Bool {
+    ) async throws -> Bool {
         var lastData: [HKSample]?
         do {
             lastData = try await readLastDataFromHealthStore(for: sampleType)
@@ -243,7 +227,7 @@ extension HealthCoreProvider {
                 type: .error
             )
             if shouldThrowError {
-                readingErrorHandler()
+                throw HealthCoreError.readingErrorHandler
             }
             return false
         }
@@ -259,7 +243,7 @@ extension HealthCoreProvider {
                 "There is no ability to read data from HealthStore.",
                 type: .warning
             )
-            readingErrorHandler()
+            throw HealthCoreError.readingErrorHandler
         }
         return false
     }
@@ -326,9 +310,7 @@ extension HealthCoreProvider {
 extension HealthCoreProvider {
 
     /// Makes `HealthStore` authorization request.
-    private func makeAuthorizationRequest(
-        authorizationErrorHandler: ErrorHandler
-    ) async {
+    private func makeAuthorizationRequest() async throws {
         do {
             try await healthStore.requestAuthorization(
                 toShare: Set(self.dataTypesToWrite.map { $0.sampleType }),
@@ -336,7 +318,7 @@ extension HealthCoreProvider {
             )
         } catch {
             Logger.logEvent("Unsuccessful HealthKit authorization request.", type: .error)
-            authorizationErrorHandler()
+            throw HealthCoreError.authorizationErrorHandler
         }
     }
 
