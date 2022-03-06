@@ -7,9 +7,9 @@ import Logger
 public typealias ErrorHandler = () -> ()
 
 public enum HealthCoreError: Error {
-    case writingErrorHandler
-    case readingErrorHandler
-    case authorizationErrorHandler
+    case writingError
+    case readingError
+    case authorizationError
 }
 
 // MARK: - HealthCoreProvider
@@ -112,7 +112,7 @@ extension HealthCoreProvider {
                 "Permission to write to HealthStore was denied by user.",
                 type: .warning
             )
-            throw HealthCoreError.authorizationErrorHandler
+            throw HealthCoreError.authorizationError
         }
     }
 
@@ -125,7 +125,7 @@ extension HealthCoreProvider {
             try await healthStore.save(data)
         } catch {
             Logger.logEvent("Unuccessfully wrote data to HealthStore.", type: .error)
-            throw HealthCoreError.writingErrorHandler
+            throw HealthCoreError.writingError
         }
         Logger.logEvent("Successfully wrote data to HealthStore.", type: .success)
     }
@@ -169,9 +169,7 @@ extension HealthCoreProvider {
         ascending: Bool,
         limit: Int,
         author: BundleAuthor,
-        queryOptions: HKQueryOptions,
-        readingErrorHandler: ErrorHandler,
-        authorizationErrorHandler: ErrorHandler
+        queryOptions: HKQueryOptions
     ) async throws -> [HKSample]? {
         guard
             HKHealthStore.isHealthDataAvailable(),
@@ -227,7 +225,7 @@ extension HealthCoreProvider {
                 type: .error
             )
             if shouldThrowError {
-                throw HealthCoreError.readingErrorHandler
+                throw HealthCoreError.readingError
             }
             return false
         }
@@ -243,7 +241,7 @@ extension HealthCoreProvider {
                 "There is no ability to read data from HealthStore.",
                 type: .warning
             )
-            throw HealthCoreError.readingErrorHandler
+            throw HealthCoreError.readingError
         }
         return false
     }
@@ -318,7 +316,7 @@ extension HealthCoreProvider {
             )
         } catch {
             Logger.logEvent("Unsuccessful HealthKit authorization request.", type: .error)
-            throw HealthCoreError.authorizationErrorHandler
+            throw HealthCoreError.authorizationError
         }
     }
 
