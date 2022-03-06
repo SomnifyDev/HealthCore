@@ -6,7 +6,7 @@ import Logger
 
 public typealias ErrorHandler = () -> ()
 
-public enum HealthCoreError: Error {
+public enum HealthCoreProviderError: Error {
     case writingError
     case readingError
     case authorizationError
@@ -105,7 +105,7 @@ extension HealthCoreProvider {
                 "Permission to write to HealthStore was denied by user.",
                 type: .warning
             )
-            throw HealthCoreError.authorizationError
+            throw HealthCoreProviderError.authorizationError
         }
     }
 
@@ -115,7 +115,7 @@ extension HealthCoreProvider {
             try await healthStore.save(data)
         } catch {
             Logger.logEvent("Unuccessfully wrote data to HealthStore.", type: .error)
-            throw HealthCoreError.writingError
+            throw HealthCoreProviderError.writingError
         }
         Logger.logEvent("Successfully wrote data to HealthStore.", type: .success)
     }
@@ -152,7 +152,6 @@ extension HealthCoreProvider {
     // MARK: - Public methods
 
     /// Reads data from `HealthStore`.
-    @discardableResult
     public func readData(
         sampleType: SampleType,
         dateInterval: DateInterval,
@@ -215,7 +214,7 @@ extension HealthCoreProvider {
                 type: .error
             )
             if shouldThrowError {
-                throw HealthCoreError.readingError
+                throw HealthCoreProviderError.readingError
             }
             return false
         }
@@ -231,7 +230,7 @@ extension HealthCoreProvider {
                 "There is no ability to read data from HealthStore.",
                 type: .warning
             )
-            throw HealthCoreError.readingError
+            throw HealthCoreProviderError.readingError
         }
         return false
     }
@@ -306,7 +305,7 @@ extension HealthCoreProvider {
             )
         } catch {
             Logger.logEvent("Unsuccessful HealthKit authorization request.", type: .error)
-            throw HealthCoreError.authorizationError
+            throw HealthCoreProviderError.authorizationError
         }
     }
 
