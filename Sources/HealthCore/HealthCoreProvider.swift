@@ -128,18 +128,8 @@ extension HealthCoreProvider {
 
 extension HealthCoreProvider {
     public enum BundleAuthor {
-        case own
         case concrete(identifiers: Set<String>)
         case all
-
-        var predicate: NSPredicate? {
-            switch self {
-            case .own:
-                return HKQuery.predicateForObjects(from: HKSource.default())
-            default:
-                return nil
-            }
-        }
 
         var bundles: Set<String> {
             switch self {
@@ -254,9 +244,8 @@ extension HealthCoreProvider {
                         withStart: dateInterval.start,
                         end: dateInterval.end,
                         options: queryOptions
-                    ),
-                    author.predicate
-                ].compactMap { $0 }),
+                    )
+                ]),
                 limit: limit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: ascending)]
             ) { _, data, error in
