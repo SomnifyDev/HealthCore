@@ -9,34 +9,28 @@ public typealias ErrorHandler = () -> ()
 // MARK: - HealthCoreProvider
 
 public final class HealthCoreProvider {
-    public enum HealthType: String, CaseIterable {
-        case energy, heart, asleep, inbed, respiratory
+    public enum SampleType: Hashable {
+        case quantityType(forIdentifier: HKQuantityTypeIdentifier)
+        case categoryType(forIdentifier: HKCategoryTypeIdentifier, categoryValue: Int)
 
-        public var hkValue: HKSampleType {
+        public var sampleType: HKSampleType {
             switch self {
-            case .energy:
-                return HKSampleType.quantityType(forIdentifier: .activeEnergyBurned)!
-            case .heart:
-                return HKSampleType.quantityType(forIdentifier: .heartRate)!
-            case .asleep:
-                return HKSampleType.categoryType(forIdentifier: .sleepAnalysis)!
-            case .inbed:
-                return HKSampleType.categoryType(forIdentifier: .sleepAnalysis)!
-            case .respiratory:
-                return HKSampleType.quantityType(forIdentifier: .respiratoryRate)!
+            case .quantityType(let forIdentifier):
+                return HKSampleType.quantityType(forIdentifier: forIdentifier)!
+            case .categoryType(let forIdentifier, _):
+                return HKSampleType.categoryType(forIdentifier: forIdentifier)!
             }
         }
 
-        public var metaDataKey: String {
-            switch self {
-            case .energy:
-                return "Energy consumption"
-            case .heart:
-                return "Heart rate mean"
-            case .respiratory:
-                return "Respiratory rate"
+        static func ==(lhs: SampleType, rhs: HKSample) -> Bool {
+            switch (lhs, rhs) {
+
+            case (.quantityType(_), rhs):
+                return lhs.sampleType == rhs.sampleType
+            case (let .categoryType(_, categoryValue), rhs):
+                return lhs.sampleType == rhs.sampleType && (rhs as? HKCategorySample)?.value == categoryValue
             default:
-                fatalError("this health sample shouldn't be written like metadata")
+                return false
             }
         }
     }
@@ -44,14 +38,14 @@ public final class HealthCoreProvider {
     // MARK: - Private properties
 
     private let healthStore: HKHealthStore = HKHealthStore()
-    private let dataTypesToRead: Set<HealthType>
-    private let dataTypesToWrite: Set<HealthType>
+    private let dataTypesToRead: Set<SampleType>
+    private let dataTypesToWrite: Set<SampleType>
 
     // MARK: - Public init
 
     public init(
-        dataTypesToRead: Set<HealthType>,
-        dataTypesToWrite: Set<HealthType>
+        dataTypesToRead: Set<SampleType>,
+        dataTypesToWrite: Set<SampleType>
     ) {
         self.dataTypesToRead = dataTypesToRead
         self.dataTypesToWrite = dataTypesToWrite
@@ -141,27 +135,25 @@ extension HealthCoreProvider {
 
 extension HealthCoreProvider {
     public enum BundleAuthor {
-        case sleepy
-        case apple
-        case everyone
+        case own
+        case concrete(identifiers: Set<String>)
+        case all
 
         var predicate: NSPredicate? {
             switch self {
-            case .sleepy:
+            case .own:
                 return HKQuery.predicateForObjects(from: HKSource.default())
             default:
                 return nil
             }
         }
 
-        var bundleDescription: [String] {
+        var bundles: Set<String> {
             switch self {
-            case .sleepy:
-                return ["com.benmustafa", "com.sinapsis"]
-            case .apple:
-                return ["com.apple"]
-            case .everyone:
-                return []
+            case .concrete(let identifiers):
+                return identifiers
+            default:
+                return Set()
             }
         }
     }
@@ -171,7 +163,7 @@ extension HealthCoreProvider {
     /// Reads data from `HealthStore`.
     @discardableResult
     public func readData(
-        healthType: HealthType,
+        sampleType: SampleType,
         dateInterval: DateInterval,
         ascending: Bool,
         limit: Int,
@@ -183,7 +175,7 @@ extension HealthCoreProvider {
         guard
             HKHealthStore.isHealthDataAvailable(),
             await isReadPermissionGranted(
-                for: healthType,
+                for: sampleType,
                 readingErrorHandler: readingErrorHandler,
                 authorizationErrorHandler: authorizationErrorHandler
             )
@@ -193,7 +185,7 @@ extension HealthCoreProvider {
         var data: [HKSample]?
         do {
             data = try await readDataFromHealthStore(
-                healthType: healthType,
+                sampleType: sampleType,
                 dateInterval: dateInterval,
                 ascending: ascending,
                 limit: limit,
@@ -210,13 +202,13 @@ extension HealthCoreProvider {
 
     /// Checks if permission to read data from `HealthStore` was granted by user.
     private func isReadPermissionGranted(
-        for healthType: HealthType,
+        for sampleType: SampleType,
         readingErrorHandler: ErrorHandler,
         authorizationErrorHandler: ErrorHandler
     ) async -> Bool {
         guard
             await !isAbleToReadData(
-                healthType: healthType,
+                sampleType: sampleType,
                 readingErrorHandler: readingErrorHandler,
                 shouldThrowError: false
             )
@@ -226,7 +218,7 @@ extension HealthCoreProvider {
         await makeAuthorizationRequest(authorizationErrorHandler: authorizationErrorHandler)
         guard
             await !isAbleToReadData(
-                healthType: healthType,
+                sampleType: sampleType,
                 readingErrorHandler: readingErrorHandler,
                 shouldThrowError: true
             )
@@ -238,13 +230,13 @@ extension HealthCoreProvider {
 
     /// Tries to get the last data from `HealthStore` to determine if there is an ability to read data at all.
     private func isAbleToReadData(
-        healthType: HealthType,
+        sampleType: SampleType,
         readingErrorHandler: ErrorHandler,
         shouldThrowError: Bool
     ) async -> Bool {
         var lastData: [HKSample]?
         do {
-            lastData = try await readLastDataFromHealthStore(for: healthType)
+            lastData = try await readLastDataFromHealthStore(for: sampleType)
         } catch {
             Logger.logEvent(
                 "Unsuccessfully finished reading data after making authorization request with error: \(error.localizedDescription)",
@@ -274,7 +266,7 @@ extension HealthCoreProvider {
 
     /// Gets samples from `HealthStore` database using passed parameters.
     private func readDataFromHealthStore(
-        healthType: HealthType,
+        sampleType: SampleType,
         dateInterval: DateInterval,
         ascending: Bool,
         limit: Int,
@@ -283,7 +275,7 @@ extension HealthCoreProvider {
     ) async throws -> [HKSample]? {
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(
-                sampleType: healthType.hkValue,
+                sampleType: sampleType.sampleType,
                 predicate: NSCompoundPredicate(andPredicateWithSubpredicates: [
                     HKQuery.predicateForSamples(
                         withStart: dateInterval.start,
@@ -299,10 +291,8 @@ extension HealthCoreProvider {
                     continuation.resume(throwing: error)
                 } else {
                     let samplesFiltered = data?.filter { sample in
-                        (author.bundleDescription.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) })) &&
-                        (sample as? HKCategorySample)?.value == ((healthType == .asleep)
-                                                                 ? HKCategoryValueSleepAnalysis.asleep.rawValue
-                                                                 : HKCategoryValueSleepAnalysis.inBed.rawValue)
+                        (author.bundles.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) })) &&
+                        sampleType == sample
                     }
 
                     continuation.resume(returning: samplesFiltered)
@@ -314,17 +304,17 @@ extension HealthCoreProvider {
 
     /// Gets the last sample from `HealthStore`.
     private func readLastDataFromHealthStore(
-        for healthType: HealthType
+        for sampleType: SampleType
     ) async throws -> [HKSample]? {
         return try await readDataFromHealthStore(
-            healthType: healthType,
+            sampleType: sampleType,
             dateInterval: DateInterval(
                 start: Date.distantPast,
                 end: Date.distantFuture
             ),
             ascending: false,
             limit: 1,
-            author: .everyone,
+            author: .all,
             queryOptions: []
         )
     }
@@ -341,8 +331,8 @@ extension HealthCoreProvider {
     ) async {
         do {
             try await healthStore.requestAuthorization(
-                toShare: Set(self.dataTypesToWrite.map { $0.hkValue }),
-                read: Set(self.dataTypesToRead.map { $0.hkValue })
+                toShare: Set(self.dataTypesToWrite.map { $0.sampleType }),
+                read: Set(self.dataTypesToRead.map { $0.sampleType })
             )
         } catch {
             Logger.logEvent("Unsuccessful HealthKit authorization request.", type: .error)
