@@ -127,6 +127,9 @@ extension HealthCoreProvider {
 // MARK: - Reading data
 
 extension HealthCoreProvider {
+
+    // MARK: - Public types
+
     public enum BundleAuthor {
         case own
         case concrete(identifiers: Set<String>)
