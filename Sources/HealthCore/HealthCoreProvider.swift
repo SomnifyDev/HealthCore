@@ -242,13 +242,11 @@ extension HealthCoreProvider {
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: sampleType.sampleType,
-                predicate: NSCompoundPredicate(andPredicateWithSubpredicates: [
-                    HKQuery.predicateForSamples(
-                        withStart: dateInterval.start,
-                        end: dateInterval.end,
-                        options: queryOptions
-                    )
-                ]),
+                predicate: HKQuery.predicateForSamples(
+                    withStart: dateInterval.start,
+                    end: dateInterval.end,
+                    options: queryOptions
+                ),
                 limit: limit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: ascending)]
             ) { _, data, error in
@@ -256,7 +254,7 @@ extension HealthCoreProvider {
                     continuation.resume(throwing: error)
                 } else {
                     let samplesFiltered = data?.filter { sample in
-                        (author.bundles.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) })) &&
+                        (author.bundles.isEmpty || (author.bundles.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) }))) &&
                         sampleType == sample
                     }
 

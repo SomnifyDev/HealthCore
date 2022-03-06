@@ -69,10 +69,10 @@ struct ContentView: View {
     // MARK: - Init
 
     init() {
-        let neededDataTypes: Set<HKSampleType> = [
-            HKQuantityType(.heartRate),
-            HKQuantityType(.activeEnergyBurned),
-            HKCategoryType(.sleepAnalysis)
+        let neededDataTypes: Set<HealthCoreProvider.SampleType> = [
+            .quantityType(forIdentifier: .heartRate),
+            .quantityType(forIdentifier: .activeEnergyBurned),
+            .categoryType(forIdentifier: .sleepAnalysis, categoryValue: 0)
         ]
         self.healthCoreProvider = HealthCoreProvider(
             dataTypesToRead: neededDataTypes,
@@ -83,48 +83,44 @@ struct ContentView: View {
     // MARK: - Private properties
 
     private func readData() async {
-        let data = await healthCoreProvider.readData(
-            sampleType: HKQuantityType(.heartRate),
-            dateInterval: DateInterval(
-                start: Date.distantPast,
-                end: Date.distantFuture
-            ),
-            ascending: false,
-            limit: 10,
-            queryOptions: [],
-            readingErrorHandler: {
-                shouldShowUnsuccessfulReadingErrorAlert.toggle()
-            },
-            authorizationErrorHandler: {
-                shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
-            }
-        )
-        print(data?.description ?? "")
+        do {
+            let data = try await healthCoreProvider.readData(
+                sampleType: .quantityType(forIdentifier: .heartRate),
+                dateInterval: DateInterval(
+                    start: Date.distantPast,
+                    end: Date.distantFuture
+                ),
+                ascending: false,
+                limit: 10,
+                queryOptions: []
+            )
+            print(data?.description ?? "")
+        } catch {
+            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+        }
     }
 
     private func writeData() async {
-        await healthCoreProvider.writeData(
-            data: [
-                HKCategorySample(
-                    type: HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!,
-                    value: HKCategoryValueSleepAnalysis.asleep.rawValue,
-                    start: Date(),
-                    end: Date()
-                ),
-                HKQuantitySample(
-                    type: HKQuantityType(.heartRate),
-                    quantity: HKQuantity(unit: .countMin(), doubleValue: 55.0),
-                    start: Date(),
-                    end: Date()
-                )
-            ],
-            writingErrorHandler: {
-                shouldShowUnsuccessfulWritingErrorAlert.toggle()
-            },
-            authorizationErrorHandler: {
-                shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
-            }
-        )
+        do {
+            try await healthCoreProvider.writeData(
+                data: [
+                    HKCategorySample(
+                        type: HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!,
+                        value: HKCategoryValueSleepAnalysis.asleep.rawValue,
+                        start: Date(),
+                        end: Date()
+                    ),
+                    HKQuantitySample(
+                        type: HKQuantityType(.heartRate),
+                        quantity: HKQuantity(unit: .countMin(), doubleValue: 55.0),
+                        start: Date(),
+                        end: Date()
+                    )
+                ]
+            )
+        } catch {
+            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+        }
     }
 
 }
