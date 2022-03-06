@@ -66,11 +66,7 @@ extension HealthCoreProvider {
     // MARK: - Public methods
 
     /// Writes data to `HealthStore`.
-    public func writeData(
-        data: [HKSample],
-        writingErrorHandler: ErrorHandler,
-        authorizationErrorHandler: ErrorHandler
-    ) async throws {
+    public func writeData(data: [HKSample]) async throws {
         guard
             HKHealthStore.isHealthDataAvailable(),
             let sampleType = data.first?.sampleType,
@@ -78,10 +74,7 @@ extension HealthCoreProvider {
         else {
             return
         }
-        try await writeDataToHealthStore(
-            data: data,
-            writingErrorHandler: writingErrorHandler
-        )
+        try await writeDataToHealthStore(data: data)
     }
 
     // MARK: - Private methods
@@ -117,10 +110,7 @@ extension HealthCoreProvider {
     }
 
     /// Saves data to `HealthStore`.
-    private func writeDataToHealthStore(
-        data: [HKSample],
-        writingErrorHandler: ErrorHandler
-    ) async throws {
+    private func writeDataToHealthStore(data: [HKSample]) async throws {
         do {
             try await healthStore.save(data)
         } catch {
@@ -166,10 +156,10 @@ extension HealthCoreProvider {
     public func readData(
         sampleType: SampleType,
         dateInterval: DateInterval,
-        ascending: Bool,
-        limit: Int,
-        author: BundleAuthor,
-        queryOptions: HKQueryOptions
+        ascending: Bool = true,
+        limit: Int = 100_000,
+        author: BundleAuthor = .all,
+        queryOptions: HKQueryOptions = []
     ) async throws -> [HKSample]? {
         guard
             HKHealthStore.isHealthDataAvailable(),
