@@ -22,7 +22,7 @@ let package = Package(
          .package(
             name: "SomnifyDependencies",
             url: "https://github.com/Somnify/Dependencies.git",
-            .exact("1.2.0")
+            .exact("1.2.1")
          )
     ],
     targets: [
