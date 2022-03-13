@@ -28,6 +28,19 @@ struct ContentView: View {
             Spacer()
 
             Button {
+                Task { await readWorkoutData() }
+            } label: {
+                Label {
+                    Text("Read workout data from HealthStore")
+                } icon: {
+                    Image(systemName: "arrow.down.heart.fill")
+                        .foregroundColor(.red)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+
+            Button {
                 Task { await writeData() }
             } label: {
                 Label {
@@ -72,7 +85,8 @@ struct ContentView: View {
         let neededDataTypes: Set<HealthCoreProvider.SampleType> = [
             .quantityType(forIdentifier: .heartRate),
             .quantityType(forIdentifier: .activeEnergyBurned),
-            .categoryType(forIdentifier: .sleepAnalysis, categoryValue: 0)
+            .categoryType(forIdentifier: .sleepAnalysis, categoryValue: 0),
+            .workoutType
         ]
         self.healthCoreProvider = HealthCoreProvider(
             dataTypesToRead: neededDataTypes,
@@ -81,6 +95,24 @@ struct ContentView: View {
     }
 
     // MARK: - Private properties
+
+    private func readWorkoutData() async {
+        do {
+            let today = Date()
+            let data = try await healthCoreProvider.readData(
+                sampleType: .workoutType,
+                dateInterval: DateInterval(
+                    start: Calendar.current.date(byAdding: .day, value: -100, to: today)!,
+                    end: today
+                )
+            )
+            if let workout = data?.first as? HKWorkout {
+                print(workout)
+            }
+        } catch {
+            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+        }
+    }
 
     private func readData() async {
         do {
