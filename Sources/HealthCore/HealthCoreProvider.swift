@@ -21,6 +21,7 @@ public final class HealthCoreProvider {
     public enum SampleType: Hashable {
         case quantityType(forIdentifier: HKQuantityTypeIdentifier)
         case categoryType(forIdentifier: HKCategoryTypeIdentifier, categoryValue: Int)
+        case workoutType
 
         public var sampleType: HKSampleType {
             switch self {
@@ -28,6 +29,8 @@ public final class HealthCoreProvider {
                 return HKSampleType.quantityType(forIdentifier: forIdentifier)!
             case .categoryType(let forIdentifier, _):
                 return HKSampleType.categoryType(forIdentifier: forIdentifier)!
+            case .workoutType:
+                return HKSampleType.workoutType()
             }
         }
 
@@ -37,6 +40,8 @@ public final class HealthCoreProvider {
                 return lhs.sampleType == rhs.sampleType
             case (let .categoryType(_, categoryValue), rhs):
                 return lhs.sampleType == rhs.sampleType && (rhs as? HKCategorySample)?.value == categoryValue
+            case (.workoutType, rhs):
+                return lhs.sampleType == rhs.sampleType
             default:
                 return false
             }
@@ -151,7 +156,7 @@ extension HealthCoreProvider {
         sampleType: SampleType,
         dateInterval: DateInterval,
         ascending: Bool = true,
-        limit: Int = 100_000,
+        limit: Int = HKObjectQueryNoLimit,
         author: BundleAuthor = .all,
         queryOptions: HKQueryOptions = []
     ) async throws -> [HKSample]? {
