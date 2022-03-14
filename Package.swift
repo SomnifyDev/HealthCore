@@ -21,7 +21,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
          .package(
             name: "SomnifyDependencies",
-            url: "https://github.com/Somnify/Dependencies.git",
+            url: "https://github.com/Somnify/SomnifyDependencies.git",
             .exact("1.2.1")
          )
     ],
