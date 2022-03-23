@@ -6,6 +6,7 @@ import Logger
 // MARK: - Public types
 
 public typealias HeartbeatSeries = [Double]
+public typealias HRVIndicatorValue = Double
 
 public enum HeartbeatSeriesGettingDataStrategy {
     case last
@@ -67,6 +68,24 @@ public final class HeartCoreProvider {
             return nil
         }
         return getHeartbeatData(from: heartbeatData)
+    }
+
+    public func getHeartRateVariabilityData(
+        dateInterval: DateInterval,
+        ascending: Bool = true,
+        limit: Int = HKObjectQueryNoLimit,
+        author: HealthCoreProvider.BundleAuthor = .all,
+        queryOptions: HKQueryOptions = []
+    ) async throws -> [HRVIndicatorValue]? {
+        guard
+            let samples = try await healthCoreProvider.readData(
+                sampleType: .quantityType(forIdentifier: .heartRateVariabilitySDNN),
+                dateInterval: dateInterval
+            ) as? [HKQuantitySample]
+        else {
+            return nil
+        }
+        return samples.map { $0.quantity.doubleValue(for: .secondUnit(with: .milli)) }
     }
 
     // MARK: - Private methods
