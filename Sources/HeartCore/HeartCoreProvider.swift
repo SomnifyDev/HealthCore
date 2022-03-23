@@ -39,7 +39,10 @@ public final class HeartCoreProvider {
 
     // MARK: - Public methods
 
-    public func getHeartbeatSeries(_ strategy: HeartbeatSeriesGettingDataStrategy) async throws -> HeartbeatSeries? {
+    /// Returns heartbeat series (array of `timeSinceSeriesStart` aka `Double`), that are calculating when the Apple Watch's sensor tracks heart rate variability
+    public func getHeartbeatSeries(
+        _ strategy: HeartbeatSeriesGettingDataStrategy
+    ) async throws -> HeartbeatSeries? {
         switch strategy {
         case .last:
             return try await getLastHeartbeatSeries()
@@ -48,6 +51,7 @@ public final class HeartCoreProvider {
         }
     }
 
+    /// Returns simple heartbeat data of the user with it's (measurment) `value` and `recordingDate`
     public func getHeartbeatData(
         dateInterval: DateInterval,
         ascending: Bool = true,
@@ -70,6 +74,7 @@ public final class HeartCoreProvider {
         return getHeartbeatData(from: heartbeatData)
     }
 
+    /// Returns heart rate variability indicator during the concrete period of time
     public func getHeartRateVariabilityData(
         dateInterval: DateInterval,
         ascending: Bool = true,
