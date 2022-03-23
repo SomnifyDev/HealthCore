@@ -22,6 +22,7 @@ public final class HealthCoreProvider {
         case quantityType(forIdentifier: HKQuantityTypeIdentifier)
         case categoryType(forIdentifier: HKCategoryTypeIdentifier, categoryValue: Int)
         case workoutType
+        case seriesType(type: HKSeriesType)
 
         public var sampleType: HKSampleType {
             switch self {
@@ -31,6 +32,8 @@ public final class HealthCoreProvider {
                 return HKSampleType.categoryType(forIdentifier: forIdentifier)!
             case .workoutType:
                 return HKSampleType.workoutType()
+            case .seriesType(let type):
+                return type
             }
         }
 
@@ -42,8 +45,24 @@ public final class HealthCoreProvider {
                 return lhs.sampleType == rhs.sampleType && (rhs as? HKCategorySample)?.value == categoryValue
             case (.workoutType, rhs):
                 return lhs.sampleType == rhs.sampleType
+            case (.seriesType(_), rhs):
+                return lhs.sampleType == rhs.sampleType
             default:
                 return false
+            }
+        }
+    }
+
+    public enum BundleAuthor {
+        case concrete(identifiers: Set<String>)
+        case all
+
+        var bundles: Set<String> {
+            switch self {
+            case .concrete(let identifiers):
+                return identifiers
+            case .all:
+                return []
             }
         }
     }
@@ -132,22 +151,6 @@ extension HealthCoreProvider {
 // MARK: - Reading data
 
 extension HealthCoreProvider {
-
-    // MARK: - Public types
-
-    public enum BundleAuthor {
-        case concrete(identifiers: Set<String>)
-        case all
-
-        var bundles: Set<String> {
-            switch self {
-            case .concrete(let identifiers):
-                return identifiers
-            case .all:
-                return Set()
-            }
-        }
-    }
 
     // MARK: - Public methods
 
@@ -263,7 +266,6 @@ extension HealthCoreProvider {
                         (author.bundles.isEmpty || (author.bundles.contains(where: { sample.sourceRevision.source.bundleIdentifier.hasPrefix($0) }))) &&
                         sampleType == sample
                     }
-
                     continuation.resume(returning: samplesFiltered)
                 }
             }
