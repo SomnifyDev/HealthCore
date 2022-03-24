@@ -13,7 +13,8 @@ let package = Package(
         .library(
             name: "HealthCore",
             targets: [
-                "HealthCore"
+                "HealthCore",
+                "HeartCore"
             ]
         ),
     ],
@@ -31,6 +32,13 @@ let package = Package(
         .target(
             name: "HealthCore",
             dependencies: [
+                .product(name: "SomnifyDependencies", package: "SomnifyDependencies")
+            ]
+        ),
+        .target(
+            name: "HeartCore",
+            dependencies: [
+                "HealthCore",
                 .product(name: "SomnifyDependencies", package: "SomnifyDependencies")
             ]
         )
