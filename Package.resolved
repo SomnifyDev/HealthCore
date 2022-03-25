@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SomnifyDependencies",
+        "repositoryURL": "https://github.com/Somnify/SomnifyDependencies.git",
+        "state": {
+          "branch": null,
+          "revision": "9b83ce5548c7805cee9211cbfab5bf6faa8503e5",
+          "version": "1.2.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

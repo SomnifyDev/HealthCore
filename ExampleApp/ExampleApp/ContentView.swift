@@ -1,5 +1,6 @@
 import SwiftUI
 import HealthCore
+import SleepCore
 import HealthKit
 import Logger
 
@@ -10,7 +11,9 @@ struct ContentView: View {
     @State private var shouldShowUnsuccessfulAuthorizationErrorAlert: Bool = false
     @State private var shouldShowUnsuccessfulWritingErrorAlert: Bool = false
     @State private var shouldShowUnsuccessfulReadingErrorAlert: Bool = false
+
     private let healthCoreProvider: HealthCoreProvider
+    private let sleepCoreProvider: SleepCoreProvider
 
     // MARK: - Internal properties
 
@@ -28,7 +31,7 @@ struct ContentView: View {
             Spacer()
 
             Button {
-                Task { await readWorkoutData() }
+                Task { await self.readWorkoutData() }
             } label: {
                 Label {
                     Text("Read workout data from HealthStore")
@@ -41,7 +44,7 @@ struct ContentView: View {
             .padding(.horizontal)
 
             Button {
-                Task { await writeData() }
+                Task { await self.writeData() }
             } label: {
                 Label {
                     Text("Write data to HealthStore")
@@ -54,7 +57,7 @@ struct ContentView: View {
             .padding(.horizontal)
 
             Button {
-                Task { await readData() }
+                Task { await self.readData() }
             } label: {
                 Label {
                     Text("Read data from HealthStore")
@@ -66,15 +69,29 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .padding(.horizontal)
 
+            Button {
+                Task { await self.readSleep() }
+            } label: {
+                Label {
+                    Text("Read sleep from HealthStore")
+                } icon: {
+                    Image(systemName: "arrow.up.heart.fill")
+                        .foregroundColor(.red)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+
+
             Spacer()
         }
-        .alert("Error during HealthStore authorization", isPresented: $shouldShowUnsuccessfulAuthorizationErrorAlert) {
+        .alert("Error during HealthStore authorization", isPresented: self.$shouldShowUnsuccessfulAuthorizationErrorAlert) {
             Button("OK", role: .cancel) { }
         }
-        .alert("Error during reading from HealthStore", isPresented: $shouldShowUnsuccessfulReadingErrorAlert) {
+        .alert("Error during reading from HealthStore", isPresented: self.$shouldShowUnsuccessfulReadingErrorAlert) {
             Button("OK", role: .cancel) { }
         }
-        .alert("Error during writing to HealthStore", isPresented: $shouldShowUnsuccessfulWritingErrorAlert) {
+        .alert("Error during writing to HealthStore", isPresented: self.$shouldShowUnsuccessfulWritingErrorAlert) {
             Button("OK", role: .cancel) { }
         }
     }
@@ -92,6 +109,8 @@ struct ContentView: View {
             dataTypesToRead: neededDataTypes,
             dataTypesToWrite: neededDataTypes
         )
+
+        self.sleepCoreProvider = SleepCoreProvider(healthCoreProvider: self.healthCoreProvider)
     }
 
     // MARK: - Private properties
@@ -99,7 +118,7 @@ struct ContentView: View {
     private func readWorkoutData() async {
         do {
             let today = Date()
-            let data = try await healthCoreProvider.readData(
+            let data = try await self.healthCoreProvider.readData(
                 sampleType: .workoutType,
                 dateInterval: DateInterval(
                     start: Calendar.current.date(byAdding: .day, value: -100, to: today)!,
@@ -110,13 +129,13 @@ struct ContentView: View {
                 print(workout)
             }
         } catch {
-            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+            self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
         }
     }
 
     private func readData() async {
         do {
-            let data = try await healthCoreProvider.readData(
+            let data = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRate),
                 dateInterval: DateInterval(
                     start: Date.distantPast,
@@ -128,13 +147,13 @@ struct ContentView: View {
             )
             print(data?.description ?? "")
         } catch {
-            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+            self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
         }
     }
 
     private func writeData() async {
         do {
-            try await healthCoreProvider.writeData(
+            try await self.healthCoreProvider.writeData(
                 data: [
                     HKCategorySample(
                         type: HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier.sleepAnalysis)!,
@@ -151,8 +170,17 @@ struct ContentView: View {
                 ]
             )
         } catch {
-            shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+            self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
         }
     }
 
+    private func readSleep() async {
+        do {
+            let sleep = try await self.sleepCoreProvider.retrieveLastSleep()
+            print("Sleep durationn")
+            print(sleep.inbedInterval?.duration)
+        } catch {
+            self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+        }
+    }
 }

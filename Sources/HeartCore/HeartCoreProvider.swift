@@ -45,9 +45,9 @@ public final class HeartCoreProvider {
     ) async throws -> HeartbeatSeries? {
         switch strategy {
         case .last:
-            return try await getLastHeartbeatSeries()
+            return try await self.getLastHeartbeatSeries()
         case .period(let dateInterval):
-            return try await getHeartbeatSeries(during: dateInterval)
+            return try await self.getHeartbeatSeries(during: dateInterval)
         }
     }
 
@@ -60,7 +60,7 @@ public final class HeartCoreProvider {
         queryOptions: HKQueryOptions = []
     ) async throws -> [HeartbeatData]? {
         guard
-            let heartbeatData = try await healthCoreProvider.readData(
+            let heartbeatData = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRate),
                 dateInterval: dateInterval,
                 ascending: ascending,
@@ -71,7 +71,7 @@ public final class HeartCoreProvider {
         else {
             return nil
         }
-        return getHeartbeatData(from: heartbeatData)
+        return self.getHeartbeatData(from: heartbeatData)
     }
 
     /// Returns heart rate variability indicator during the concrete period of time
@@ -83,7 +83,7 @@ public final class HeartCoreProvider {
         queryOptions: HKQueryOptions = []
     ) async throws -> [HRVIndicatorValue]? {
         guard
-            let samples = try await healthCoreProvider.readData(
+            let samples = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRateVariabilitySDNN),
                 dateInterval: dateInterval
             ) as? [HKQuantitySample]
@@ -97,7 +97,7 @@ public final class HeartCoreProvider {
 
     private func getLastHeartbeatSeries() async throws -> HeartbeatSeries? {
         guard
-            let samples = try await healthCoreProvider.readData(
+            let samples = try await self.healthCoreProvider.readData(
                 sampleType: .seriesType(type: .heartbeat()),
                 dateInterval: .init(start: .distantPast, end: Date())
             ),
@@ -118,13 +118,13 @@ public final class HeartCoreProvider {
                 }
                 result.append(timeSinceSeriesStart)
             }
-            healthStore.execute(query)
+            self.healthStore.execute(query)
         }
     }
 
     private func getHeartbeatSeries(during dateInterval: DateInterval) async throws -> HeartbeatSeries? {
         guard
-            let samples = try await healthCoreProvider.readData(
+            let samples = try await self.healthCoreProvider.readData(
                 sampleType: .seriesType(type: .heartbeat()),
                 dateInterval: dateInterval
             ) as? [HKHeartbeatSeriesSample]
@@ -145,7 +145,7 @@ public final class HeartCoreProvider {
                     }
                     result.append(timeSinceSeriesStart)
                 }
-                healthStore.execute(concreteSampleQuery)
+                self.healthStore.execute(concreteSampleQuery)
             }
         }
     }
