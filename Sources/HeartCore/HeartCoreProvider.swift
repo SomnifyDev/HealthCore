@@ -25,20 +25,20 @@ public struct HeartbeatData {
 // MARK: - HeartCoreProvider
 
 public final class HeartCoreProvider {
-
+    
     // MARK: - Private properties
-
+    
     private let healthCoreProvider: HealthCoreProvider
     private let healthStore: HKHealthStore = HKHealthStore()
-
+    
     // MARK: - Init
-
+    
     public init(healthCoreProvider: HealthCoreProvider) {
         self.healthCoreProvider = healthCoreProvider
     }
-
+    
     // MARK: - Public methods
-
+    
     /// Returns heartbeat series (array of `timeSinceSeriesStart` aka `Double`), that are calculating when the Apple Watch's sensor tracks heart rate variability
     public func getHeartbeatSeries(
         _ strategy: HeartbeatSeriesGettingDataStrategy
@@ -50,7 +50,7 @@ public final class HeartCoreProvider {
             return try await self.getHeartbeatSeries(during: dateInterval)
         }
     }
-
+    
     /// Returns simple heartbeat data of the user with it's (measurment) `value` and `recordingDate`
     public func getHeartbeatData(
         dateInterval: DateInterval,
@@ -73,7 +73,7 @@ public final class HeartCoreProvider {
         }
         return self.getHeartbeatData(from: heartbeatData)
     }
-
+    
     /// Returns heart rate variability indicator during the concrete period of time
     public func getHeartRateVariabilityData(
         dateInterval: DateInterval,
@@ -92,9 +92,9 @@ public final class HeartCoreProvider {
         }
         return samples.map { $0.quantity.doubleValue(for: .secondUnit(with: .milli)) }
     }
-
+    
     // MARK: - Private methods
-
+    
     private func getLastHeartbeatSeries() async throws -> HeartbeatSeries? {
         guard
             let samples = try await self.healthCoreProvider.readData(
@@ -121,7 +121,7 @@ public final class HeartCoreProvider {
             self.healthStore.execute(query)
         }
     }
-
+    
     private func getHeartbeatSeries(during dateInterval: DateInterval) async throws -> HeartbeatSeries? {
         guard
             let samples = try await self.healthCoreProvider.readData(
@@ -149,7 +149,7 @@ public final class HeartCoreProvider {
             }
         }
     }
-
+    
     private func getHeartbeatData(from samples: [HKQuantitySample]) -> [HeartbeatData] {
         return samples.map {
             HeartbeatData(
@@ -158,5 +158,5 @@ public final class HeartCoreProvider {
             )
         }
     }
-
+    
 }

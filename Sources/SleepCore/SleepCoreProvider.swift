@@ -306,7 +306,7 @@ public final class SleepCoreProvider {
     /// Генерация  метадаты по микросну для последуюшего сохранения ее в данных сэмпла хелскит
     private func generateMetadata(microSleep: MicroSleep) -> [String: Any] {
         var metadata: [String: Any] = [:]
-
+        
         let heartValues = microSleep.heartData.compactMap { $0.value }
         let energyValues = microSleep.energyData.compactMap { $0.value }
         let respiratoryValues = microSleep.respiratoryData.compactMap { $0.value }

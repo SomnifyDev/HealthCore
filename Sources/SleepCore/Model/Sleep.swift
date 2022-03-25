@@ -4,11 +4,11 @@ import HealthKit
 // MARK: - Sleep
 
 public struct Sleep {
-
+    
     // MARK: - Public properties
-
+    
     public var samples: [MicroSleep]
-
+    
     public var phases: [SleepPhase] {
         return samples.compactMap { $0.phases }.flatMap { $0 }
     }
@@ -27,15 +27,15 @@ public struct Sleep {
     public var respiratoryData: [SampleData] {
         return self.samples.flatMap { $0.respiratoryData }
     }
-
+    
     // MARK: - Init
-
+    
     public init(samples: [MicroSleep]) {
         self.samples = samples
     }
-
+    
     // MARK: - Private methods
-
+    
     private func dateInterval(
         between leadingInterval: DateInterval?,
         and trailingInterval: DateInterval?
@@ -48,19 +48,19 @@ public struct Sleep {
         }
         return DateInterval(start: startDate, end: endDate)
     }
-
+    
 }
 
 // MARK: - MicroSleep
 
 public struct MicroSleep {
-
+    
     // MARK: - Public properties
-
+    
     public let sleepInterval: DateInterval
     public let inBedInterval: DateInterval
     public let phases: [SleepPhase]?
-
+    
     public var heartData: [SampleData] {
         return self.phases?.flatMap { $0.heartData } ?? []
     }
@@ -70,9 +70,9 @@ public struct MicroSleep {
     public var respiratoryData: [SampleData] {
         return self.phases?.flatMap { $0.respiratoryData } ?? []
     }
-
+    
     // MARK: - Init
-
+    
     public init(
         sleepInterval: DateInterval,
         inBedInterval: DateInterval,
@@ -82,5 +82,5 @@ public struct MicroSleep {
         self.inBedInterval = inBedInterval
         self.phases = phases
     }
-
+    
 }
