@@ -13,7 +13,7 @@ public enum SleepCoreProviderError: Error {
 
 // MARK: - SleepCoreProvider
 
-public final class SleepCoreProvider {
+public final class SleepCoreProvider: ObservableObject {
 
     // MARK: - Public types
 

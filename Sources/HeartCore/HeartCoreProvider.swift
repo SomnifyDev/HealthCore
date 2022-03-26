@@ -24,7 +24,7 @@ public struct HeartbeatData {
 
 // MARK: - HeartCoreProvider
 
-public final class HeartCoreProvider {
+public final class HeartCoreProvider: ObservableObject {
     
     // MARK: - Private properties
     

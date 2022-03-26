@@ -14,7 +14,7 @@ public enum HealthCoreProviderError: Error {
 
 // MARK: - HealthCoreProvider
 
-public final class HealthCoreProvider {
+public final class HealthCoreProvider: ObservableObject {
 
     // MARK: - Public types
     
