@@ -24,7 +24,7 @@ let package = Package(
          .package(
             name: "SomnifyDependencies",
             url: "https://github.com/Somnify/SomnifyDependencies.git",
-            .exact("1.2.2")
+            .branch("dev")
          )
     ],
     targets: [

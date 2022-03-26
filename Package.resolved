@@ -5,9 +5,9 @@
         "package": "SomnifyDependencies",
         "repositoryURL": "https://github.com/Somnify/SomnifyDependencies.git",
         "state": {
-          "branch": null,
+          "branch": "dev",
           "revision": "d1ee71c91b05bedc8bdb35cb51b7046e4e7b8ea2",
-          "version": "1.2.2"
+          "version": null
         }
       }
     ]
