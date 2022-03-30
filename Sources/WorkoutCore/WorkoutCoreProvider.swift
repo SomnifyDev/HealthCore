@@ -57,4 +57,5 @@ public final class WorkoutCoreProvider: ObservableObject {
             )
         }
     }
+    
 }
