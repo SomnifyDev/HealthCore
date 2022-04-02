@@ -40,7 +40,7 @@ public final class HeartCoreProvider: ObservableObject {
     
     /// Returns heartbeat series (array of `timeSinceSeriesStart` aka `Double`), that are calculating when the Apple Watch's sensor tracks heart rate variability
     ///
-    /// This methods guarantees that returning array, if it is not nil, will contain elements.
+    /// This method guarantees that returning array, if it is not nil, will contain elements.
     public func getHeartbeatSeries(during dateInterval: DateInterval) async throws -> [[HeartbeatSeries]]? {
         try await fetchHeartbeatSeries(during: dateInterval)
     }
