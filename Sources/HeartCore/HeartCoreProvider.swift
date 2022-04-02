@@ -21,7 +21,6 @@ public struct HeartbeatSeries {
     public let precededByGap: Bool
 }
 
-
 // MARK: - HeartCoreProvider
 
 public final class HeartCoreProvider: ObservableObject {
