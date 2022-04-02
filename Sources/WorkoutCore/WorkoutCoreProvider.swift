@@ -43,6 +43,8 @@ public final class WorkoutCoreProvider: ObservableObject {
         return self.getWorkoutData(from: workoutSamples)
     }
 
+    // MARK: - Private methods
+
     private func getWorkoutData(from samples: [HKWorkout]) -> [WorkoutData] {
         return samples.map {
             WorkoutData(
