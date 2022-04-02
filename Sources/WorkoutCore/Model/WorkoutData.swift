@@ -18,7 +18,7 @@ public struct WorkoutData {
         self.totalDistance != nil
     }
 
-    /// gets most importrant training value from bunch of non-empty ones
+    /// Gets most importrant training value from bunch of non-empty ones
     public var mainValueDescription: String {
         let description: String
 
