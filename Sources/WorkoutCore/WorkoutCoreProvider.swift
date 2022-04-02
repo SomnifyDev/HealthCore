@@ -28,23 +28,23 @@ public final class WorkoutCoreProvider: ObservableObject {
         queryOptions: HKQueryOptions = []
     ) async throws -> [WorkoutData]? {
         guard
-            let workoutData = try await self.healthCoreProvider.readData(
+            let workoutSamples = try await self.healthCoreProvider.readData(
                 sampleType: .workoutType,
                 dateInterval: dateInterval,
                 ascending: ascending,
                 limit: limit,
                 author: author,
                 queryOptions: queryOptions
-            )
+            )  as? [HKWorkout]
         else {
             return nil
         }
 
-        return self.getWorkoutData(from: workoutData as? [HKWorkout])
+        return self.getWorkoutData(from: workoutSamples)
     }
 
-    private func getWorkoutData(from samples: [HKWorkout]?) -> [WorkoutData]? {
-        return samples?.map {
+    private func getWorkoutData(from samples: [HKWorkout]) -> [WorkoutData] {
+        return samples.map {
             WorkoutData(
                 workoutActivityType: $0.workoutActivityType,
                 dateInterval: .init(start: $0.startDate, end: $0.endDate),
