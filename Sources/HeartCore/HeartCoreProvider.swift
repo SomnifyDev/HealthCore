@@ -19,6 +19,14 @@ public struct HeartbeatData {
 public struct HeartbeatSeries {
     public let timeSinceSeriesStart: TimeInterval
     public let precededByGap: Bool
+
+    public init(
+        timeSinceSeriesStart: TimeInterval,
+        precededByGap: Bool
+    ) {
+        self.timeSinceSeriesStart = timeSinceSeriesStart
+        self.precededByGap = precededByGap
+    }
 }
 
 // MARK: - HeartCoreProvider
