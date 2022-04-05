@@ -2,7 +2,7 @@ import HealthKit
 import CommonExtensions
 import SwiftUI
 
-public struct WorkoutData {
+public struct WorkoutData: Identifiable {
 
     public let id = UUID()
     public let workoutActivityType: HKWorkoutActivityType

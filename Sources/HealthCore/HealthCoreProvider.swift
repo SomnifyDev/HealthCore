@@ -180,6 +180,24 @@ extension HealthCoreProvider {
         )
     }
 
+    /// Gets the last sample from `HealthStore`.
+    public func readLastData(
+        for sampleType: SampleType
+    ) async throws -> [HKSample]? {
+        return try await self.readDataFromHealthStore(
+            sampleType: sampleType,
+            dateInterval: DateInterval(
+                start: Date.distantPast,
+                end: Date.distantFuture
+            ),
+            ascending: false,
+            limit: 1,
+            author: .all,
+            queryOptions: [],
+            isPermissionChecking: true
+        )
+    }
+
     // MARK: - Private methods
 
     /// Checks if permission to read data from `HealthStore` was granted by user.
@@ -211,7 +229,7 @@ extension HealthCoreProvider {
     ) async throws -> Bool {
         var lastData: [HKSample]?
         do {
-            lastData = try await self.readLastDataFromHealthStore(for: sampleType)
+            lastData = try await self.readLastData(for: sampleType)
         } catch {
             Logger.logEvent(
                 "Unsuccessfully finished reading data after making authorization request with error: \(error.localizedDescription)",
@@ -272,24 +290,6 @@ extension HealthCoreProvider {
             }
             self.healthStore.execute(query)
         }
-    }
-
-    /// Gets the last sample from `HealthStore`.
-    private func readLastDataFromHealthStore(
-        for sampleType: SampleType
-    ) async throws -> [HKSample]? {
-        return try await self.readDataFromHealthStore(
-            sampleType: sampleType,
-            dateInterval: DateInterval(
-                start: Date.distantPast,
-                end: Date.distantFuture
-            ),
-            ascending: false,
-            limit: 1,
-            author: .all,
-            queryOptions: [],
-            isPermissionChecking: true
-        )
     }
 }
 
