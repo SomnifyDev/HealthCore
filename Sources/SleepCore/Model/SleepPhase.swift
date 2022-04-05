@@ -15,7 +15,7 @@ public enum Condition {
 
 public struct SleepPhase {
     
-    public let interval: DateInterval
+    public let dateInterval: DateInterval
     public let condition: Condition
     public let heartData: [SampleData]
     public let energyData: [SampleData]

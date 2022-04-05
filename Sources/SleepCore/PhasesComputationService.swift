@@ -69,7 +69,7 @@ final class PhasesComputationService {
 
             phasesData.append(
                 SleepPhase(
-                    interval: interval,
+                    dateInterval: interval,
                     condition: condition,
                     heartData: quantityHeart.map { SampleData(
                         date: $0.startDate,
@@ -96,7 +96,7 @@ final class PhasesComputationService {
         if !phasesData.isEmpty {
             phasesData.append(
                 SleepPhase(
-                    interval: DateInterval(
+                    dateInterval: DateInterval(
                         start: sleepInterval.end,
                         end: sleepInterval.end
                     ),
