@@ -49,7 +49,7 @@ final class PhasesComputationService {
                 end: heartRateTimeData[index + 3]
             )
 
-            let condition: Condition = verdictCoefficient > 0.5 ? .deep : isPotencialAwake ? .awake : .light
+            let condition: PhaseCondition = verdictCoefficient > 0.5 ? .deep : isPotencialAwake ? .awake : .light
 
             let phaseHeartRate = heartRateValuesData[index ... index + 3]
             let meanHeartRate: Double = phaseHeartRate.reduce(0.0) { $0 + Double($1) } / 4.0
@@ -154,7 +154,7 @@ final class PhasesComputationService {
     }
 
     // MARK: Phases chart points
-    private static func getChartPoint(condition: Condition, verdictCoefficient: Double, meanHeartRate: Double) -> Double
+    private static func getChartPoint(condition: PhaseCondition, verdictCoefficient: Double, meanHeartRate: Double) -> Double
     {
         switch condition {
         case .awake:
