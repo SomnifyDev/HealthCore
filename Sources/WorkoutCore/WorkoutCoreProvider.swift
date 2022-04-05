@@ -72,5 +72,6 @@ public final class WorkoutCoreProvider: ObservableObject {
             totalSwimmingStrokeCount: sample.totalSwimmingStrokeCount
         )
     }
+
 }
 
