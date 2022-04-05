@@ -4,11 +4,19 @@ import Foundation
 
 public typealias SampleData = (date: Date, value: Double)
 
+public enum Condition {
+    case awake
+    case light
+    case deep
+}
+
 // MARK: - SleepPhase
+
 
 public struct SleepPhase {
     
-    // TODO: - Implement SleepPhases as it should be
+    public let interval: DateInterval
+    public let condition: Condition
     public let heartData: [SampleData]
     public let energyData: [SampleData]
     public let respiratoryData: [SampleData]

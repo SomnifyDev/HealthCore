@@ -35,9 +35,10 @@ public final class SleepCoreProvider: ObservableObject {
     }
 
     // MARK: - Public methods
-    
-    public func retrieveLastSleep(
-        author: HealthCoreProvider.BundleAuthor = .concrete(identifiers: ["com.apple"])
+
+    public func detectLastSleep(
+        author: HealthCoreProvider.BundleAuthor = .concrete(identifiers: ["com.apple"]),
+        shouldSaveToHealthKit: Bool
     ) async throws -> Sleep {
         self.lock.lock()
         let currentDate = Date()
@@ -106,10 +107,13 @@ public final class SleepCoreProvider: ObservableObject {
                     continue
                 }
 
-                let _ = energySamples
-                let _ = heartSamples
-                let _ = respiratorySamples
-                let sleepPhases: [SleepPhase] = [] // TODO: - Implement phases detection
+                let sleepPhases: [SleepPhase] = PhasesComputationService.computatePhases(
+                    energySamples: energySamples ?? [],
+                    heartSamples: heartSamples ?? [],
+                    breathSamples: respiratorySamples ?? [],
+                    sleepInterval: asleepInterval
+                )
+
                 let microSleep = MicroSleep(
                     sleepInterval: asleepInterval,
                     inBedInterval: inbedInterval,
@@ -118,7 +122,10 @@ public final class SleepCoreProvider: ObservableObject {
 
                 sleep.samples.append(microSleep)
                 isFirstFetch = false
-                try await self.saveMicroSleepIfNeeded(microSleep: microSleep)
+
+                if shouldSaveToHealthKit {
+                    try await self.saveMicroSleepIfNeeded(microSleep: microSleep)
+                }
 
             case .failure(_):
                 self.lock.unlock()
