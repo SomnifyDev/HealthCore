@@ -46,11 +46,8 @@ public final class WorkoutCoreProvider: ObservableObject {
     /// Returns last sample of workout data of the user
     public func getLastWorkoutData() async throws -> WorkoutData? {
         guard
-            let workoutSamples = try await self.healthCoreProvider.readData(
-                sampleType: .workoutType,
-                dateInterval: .init(start: .distantPast, end: Date())
-            )  as? [HKWorkout],
-            let lastSample = workoutSamples.last
+            let samples = try await self.healthCoreProvider.readLastData(for: .workoutType),
+            let lastSample = samples.last as? HKWorkout
         else {
             return nil
         }

@@ -106,10 +106,7 @@ public final class HeartCoreProvider: ObservableObject {
     
     private func fetchLastHeartbeatSeries() async throws -> [HeartbeatSeries]? {
         guard
-            let samples = try await self.healthCoreProvider.readData(
-                sampleType: .seriesType(type: .heartbeat()),
-                dateInterval: .init(start: .distantPast, end: Date())
-            ),
+            let samples = try await self.healthCoreProvider.readLastData(for: .seriesType(type: .heartbeat())),
             let lastSample = samples.last as? HKHeartbeatSeriesSample
         else {
             return nil
