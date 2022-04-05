@@ -3,6 +3,7 @@ import HealthCore
 import SleepCore
 import HealthKit
 import Logger
+import WorkoutCore
 
 struct ContentView: View {
 
@@ -14,6 +15,7 @@ struct ContentView: View {
 
     private let healthCoreProvider: HealthCoreProvider
     private let sleepCoreProvider: SleepCoreProvider
+    private let workoutCoreProvider: WorkoutCoreProvider
 
     // MARK: - Internal properties
 
@@ -35,6 +37,19 @@ struct ContentView: View {
             } label: {
                 Label {
                     Text("Read workout data from HealthStore")
+                } icon: {
+                    Image(systemName: "arrow.down.heart.fill")
+                        .foregroundColor(.red)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal)
+
+            Button {
+                Task { await self.readWorkoutLastData() }
+            } label: {
+                Label {
+                    Text("Read workout last data from HealthStore")
                 } icon: {
                     Image(systemName: "arrow.down.heart.fill")
                         .foregroundColor(.red)
@@ -111,6 +126,7 @@ struct ContentView: View {
         )
 
         self.sleepCoreProvider = SleepCoreProvider(healthCoreProvider: self.healthCoreProvider)
+        self.workoutCoreProvider = WorkoutCoreProvider(healthCoreProvider: self.healthCoreProvider)
     }
 
     // MARK: - Private properties
@@ -127,6 +143,18 @@ struct ContentView: View {
             )
             if let workout = data?.first as? HKWorkout {
                 print(workout)
+            }
+        } catch {
+            self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()
+        }
+    }
+
+    private func readWorkoutLastData() async {
+        do {
+            let data = try await self.workoutCoreProvider.getLastWorkoutData()
+            if let workout = data {
+                print(workout.workoutActivityType)
+                print(workout.totalDistance)
             }
         } catch {
             self.shouldShowUnsuccessfulAuthorizationErrorAlert.toggle()

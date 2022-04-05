@@ -19,7 +19,7 @@ public final class WorkoutCoreProvider: ObservableObject {
 
     // MARK: - Public methods
 
-    /// Returns simple workout data of the user
+    /// Returns sample of workout data of the user
     public func getWorkoutData(
         dateInterval: DateInterval,
         ascending: Bool = true,
@@ -40,24 +40,37 @@ public final class WorkoutCoreProvider: ObservableObject {
             return nil
         }
 
-        return self.getWorkoutData(from: workoutSamples)
+        return workoutSamples.map { self.getWorkoutData(from: $0) }
+    }
+
+    /// Returns last sample of workout data of the user
+    public func getLastWorkoutData() async throws -> WorkoutData? {
+        guard
+            let workoutSamples = try await self.healthCoreProvider.readData(
+                sampleType: .workoutType,
+                dateInterval: .init(start: .distantPast, end: Date())
+            )  as? [HKWorkout],
+            let lastSample = workoutSamples.last
+        else {
+            return nil
+        }
+
+        return self.getWorkoutData(from: lastSample)
     }
 
     // MARK: - Private methods
 
-    private func getWorkoutData(from samples: [HKWorkout]) -> [WorkoutData] {
-        return samples.map {
-            WorkoutData(
-                workoutActivityType: $0.workoutActivityType,
-                dateInterval: .init(start: $0.startDate, end: $0.endDate),
-                duration: $0.duration,
-                totalDistance: $0.totalDistance,
-                totalEnergyBurned: $0.totalEnergyBurned,
-                workoutEvents: $0.workoutEvents,
-                totalFlightsClimbed: $0.totalFlightsClimbed,
-                totalSwimmingStrokeCount: $0.totalSwimmingStrokeCount
-            )
-        }
+    private func getWorkoutData(from sample: HKWorkout) -> WorkoutData {
+        return WorkoutData(
+            workoutActivityType: sample.workoutActivityType,
+            dateInterval: .init(start: sample.startDate, end: sample.endDate),
+            duration: sample.duration,
+            totalDistance: sample.totalDistance,
+            totalEnergyBurned: sample.totalEnergyBurned,
+            workoutEvents: sample.workoutEvents,
+            totalFlightsClimbed: sample.totalFlightsClimbed,
+            totalSwimmingStrokeCount: sample.totalSwimmingStrokeCount
+        )
     }
-    
 }
+
