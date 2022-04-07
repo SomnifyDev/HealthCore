@@ -1,6 +1,13 @@
 import HealthKit
 import CommonExtensions
 import SwiftUI
+import CoreLocation
+import HeartCore
+
+public struct WorkoutRouteData {
+    public let dateInterval: DateInterval
+    public let locations: [CLLocation]
+}
 
 public struct WorkoutData: Identifiable {
 
@@ -9,10 +16,13 @@ public struct WorkoutData: Identifiable {
     public let dateInterval: DateInterval
     public let duration: TimeInterval
     public let totalDistance: HKQuantity?
+    public let routeData: [WorkoutRouteData]?
+    public let heartInterpolatedData: [HeartbeatData]?
     public let totalEnergyBurned: HKQuantity?
     public let workoutEvents: [HKWorkoutEvent]?
     public let totalFlightsClimbed: HKQuantity?
     public let totalSwimmingStrokeCount: HKQuantity?
+    public let rawSample: HKWorkout
 
     public var isActivityOutdoors: Bool {
         self.totalDistance != nil

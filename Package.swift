@@ -55,6 +55,7 @@ let package = Package(
             name: "WorkoutCore",
             dependencies: [
                 "HealthCore",
+                "HeartCore",
                 .product(name: "SomnifyDependencies", package: "SomnifyDependencies")
             ]
         )

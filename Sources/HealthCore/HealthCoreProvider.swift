@@ -69,7 +69,7 @@ public final class HealthCoreProvider: ObservableObject {
 
     // MARK: - Private properties
 
-    private let healthStore: HKHealthStore = HKHealthStore()
+    public let healthStore: HKHealthStore = HKHealthStore()
     private let dataTypesToRead: Set<SampleType>
     private let dataTypesToWrite: Set<SampleType>
 

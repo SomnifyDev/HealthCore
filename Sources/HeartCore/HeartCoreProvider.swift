@@ -66,7 +66,8 @@ public final class HeartCoreProvider: ObservableObject {
         ascending: Bool = true,
         limit: Int = HKObjectQueryNoLimit,
         author: HealthCoreProvider.BundleAuthor = .all,
-        queryOptions: HKQueryOptions = []
+        queryOptions: HKQueryOptions = [],
+        shouldInterpolate: Bool = false
     ) async throws -> [HeartbeatData]? {
         guard
             let heartbeatData = try await self.healthCoreProvider.readData(
@@ -80,7 +81,9 @@ public final class HeartCoreProvider: ObservableObject {
         else {
             return nil
         }
-        return fetchHeartbeatData(from: heartbeatData)
+        return shouldInterpolate
+        ? self.getHeartRateDataInterpolated(from: fetchHeartbeatData(from: heartbeatData))
+        : fetchHeartbeatData(from: heartbeatData)
     }
     
     /// Returns heart rate variability indicator during the concrete period of time
@@ -184,5 +187,78 @@ public final class HeartCoreProvider: ObservableObject {
             )
         }
     }
-    
+
+    /// Interpolated Heart rate data to handle missing values
+    /// Fills data for every second
+    private func getHeartRateDataInterpolated(from samples: [HeartbeatData]) -> [HeartbeatData] {
+        var heartBeatArray: [HeartbeatData] = []
+
+            for (index, item) in samples.enumerated() {
+
+
+                // converts HR recording into double
+                let currentHeartBeatRecording = item.value
+
+                // ignores first value in the array for out of bounds error
+                if (index != 0) {
+
+                    // finds the next time in self.heartSamples where a heartrate is recording by taking the time difference in seconds
+                    // between the current value and the value before this
+                    let intervalUntillNextRecording = round(item.recordingDate.timeIntervalSince(samples[index-1].recordingDate))
+                    let previousItemSample = samples[index-1]
+                    // converts HR recording into double
+                    let previousHeartBeatRecording = previousItemSample.value
+
+                    // gets the absolute value change in heart rate between current value and previous available heart rate recording
+                    let manipulationHeartBeatValue = (currentHeartBeatRecording - previousHeartBeatRecording)/intervalUntillNextRecording
+                    var manipulationHeartBeatValueVariation = manipulationHeartBeatValue
+                    let calendar = Calendar.current
+
+                    var i = 1
+
+                    // starts interpolating the data
+                    while (i < Int(intervalUntillNextRecording)) {
+
+                        // creates a new date.
+                        let newDate = calendar.date(byAdding: .second, value: i, to: previousItemSample.recordingDate)
+
+                        // adds the HR increase amount to the previous value
+                        let newBpm = previousHeartBeatRecording + manipulationHeartBeatValueVariation
+
+                        let synthesisedHeartSample = HeartbeatData(
+                            value: newBpm,
+                            recordingDate: newDate!)
+
+                        heartBeatArray.append(synthesisedHeartSample)
+                        manipulationHeartBeatValueVariation += manipulationHeartBeatValue
+                        i+=1
+
+                        /* Example:
+                         Say a BPM was recorded at time 11:00:01am of 70bpm
+                         And the next BPM was recorded at time 11:00:05am of 75bpm (which is 4 seconds later)
+                         The bpm has increased by 5
+                         therefore 5 - 1 = 4, there are 3 spaces to fill, so 4/3 = 1.33
+                         11:01:01am = 70
+                         11:01:02am = 71.3
+                         11:01:03am = 72.6
+                         11:01:04am = 73.9
+                         11:01:05am = 75
+                        */
+                    }
+
+                }
+
+                let synthesisedHeartSample = HeartbeatData(
+                    value: currentHeartBeatRecording,
+                    recordingDate: item.recordingDate)
+
+                heartBeatArray.append(synthesisedHeartSample)
+            }
+
+            // Watch produces inauthentic results when calebrating: ignore the first 5 values
+            if (heartBeatArray.count > 5) {
+                heartBeatArray.removeFirst(5)
+            }
+            return heartBeatArray
+        }
 }
