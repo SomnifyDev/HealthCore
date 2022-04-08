@@ -50,10 +50,7 @@ public final class SleepCoreProvider: ObservableObject {
 
         let rawData = try await self.getRawData(dateInterval: fetchInterval, author: author)
 
-        guard
-            !(rawData.inbedSamples ?? []).isEmpty,
-            !(rawData.asleepSamples ?? []).isEmpty
-        else {
+        if (rawData.inbedSamples ?? []).isEmpty && (rawData.asleepSamples ?? []).isEmpty {
             self.lock.unlock()
             throw SleepCoreProviderError.notEnoughRawDataError
         }
