@@ -141,13 +141,13 @@ public final class WorkoutCoreProvider: ObservableObject {
 
     private func getWorkoutData(from sample: HKWorkout) async -> WorkoutData {
         var routeData: [WorkoutRouteData]?
-        var heartInterpolatedData: [HeartbeatData]?
+        var heartInterpolatedData: [QuantityData]?
 
         do {
             routeData = try await self.getWorkoutRouteDate(for: sample)
             heartInterpolatedData = try await self.heartCoreProvider.getHeartbeatData(
                 dateInterval: .init(start: sample.startDate, end: sample.endDate),
-                shouldInterpolate: true
+                arrayModification: .interpolate
             )
 
         } catch {

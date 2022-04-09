@@ -17,6 +17,7 @@ let package = Package(
                 "HeartCore",
                 "SleepCore",
                 "WorkoutCore",
+                "EnergyCore"
             ]
         ),
     ],
@@ -39,6 +40,13 @@ let package = Package(
         ),
         .target(
             name: "HeartCore",
+            dependencies: [
+                "HealthCore",
+                .product(name: "SomnifyDependencies", package: "SomnifyDependencies")
+            ]
+        ),
+        .target(
+            name: "EnergyCore",
             dependencies: [
                 "HealthCore",
                 .product(name: "SomnifyDependencies", package: "SomnifyDependencies")
