@@ -149,7 +149,6 @@ public final class WorkoutCoreProvider: ObservableObject {
                 dateInterval: .init(start: sample.startDate, end: sample.endDate),
                 arrayModification: .interpolate
             )
-
         } catch {
             routeData = nil
             heartInterpolatedData = nil
