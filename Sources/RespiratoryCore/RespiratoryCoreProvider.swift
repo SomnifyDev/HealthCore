@@ -1,10 +1,3 @@
-//
-//  RespiratoryCoreProvider.swift
-//  
-//
-//  Created by Никита Казанцев on 10.04.2022.
-//
-
 import Foundation
 import HealthCore
 import HealthKit
@@ -49,7 +42,6 @@ public final class RespiratoryCoreProvider: ObservableObject {
         else {
             return nil
         }
-
 
         switch arrayModification {
         case .interpolate:
