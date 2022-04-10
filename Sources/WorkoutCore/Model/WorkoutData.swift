@@ -26,18 +26,17 @@ extension WorkoutData {
 
     /// Gets most importrant training value from bunch of non-empty ones
     public var mainValueDescription: String {
-        if let totalDistance = self.totalDistance {
+        if self.totalDistance != nil {
             return totalDistanceDescription
-        } else if let totalEnergyBurned = self.totalEnergyBurned {
+        } else if self.totalEnergyBurned != nil {
             return totalEnergyBurnedDescription
-        } else if let totalFlightsClimbed = self.totalFlightsClimbed {
+        } else if self.totalFlightsClimbed != nil {
             return totalFlightsClimbedDescription
-        } else if let totalSwimmingStrokeCount = self.totalSwimmingStrokeCount {
+        } else if self.totalSwimmingStrokeCount != nil {
             return totalSwimmingStrokeCountDescription
         } else {
             return dateIntervalDescription
         }
-        return "-"
     }
 
     public var workoutActivityTypeDescription: String {
@@ -48,27 +47,39 @@ extension WorkoutData {
         let formatter = DateComponentsFormatter()
         formatter.zeroFormattingBehavior = .dropAll
         formatter.allowedUnits = [.hour, .minute, .second]
-        return formatter.string(from: duration)
+        return formatter.string(from: duration) ?? "-"
     }
 
     public var totalDistanceDescription: String {
         let unit = HKUnit.meter()
-        return "\(Int(totalDistance.doubleValue(for: unit))) \(unit.unitString)"
+        if let totalDistance = totalDistance?.doubleValue(for: unit) {
+            return "\(Int(totalDistance)) \(unit.unitString)"
+        }
+        return "-"
     }
 
     public var totalEnergyBurnedDescription: String {
         let unit = HKUnit.kilocalorie()
-        return "\(totalEnergyBurned.doubleValue(for: unit)) \(unit.unitString)"
+        if let totalEnergyBurned = totalEnergyBurned?.doubleValue(for: unit) {
+            return "\(totalEnergyBurned) \(unit.unitString)"
+        }
+        return "-"
     }
 
     public var totalFlightsClimbedDescription: String {
         let unit = HKUnit.count()
-        description = "\(totalFlightsClimbed.doubleValue(for: unit)) \(unit.unitString)"
+        if let totalFlightsClimbed = totalFlightsClimbed?.doubleValue(for: unit) {
+            return "\(totalFlightsClimbed) \(unit.unitString)"
+        }
+        return "-"
     }
 
     public var totalSwimmingStrokeCountDescription: String {
         let unit = HKUnit.count()
-        return "\(totalSwimmingStrokeCount.doubleValue(for: unit)) \(unit.unitString)"
+        if let totalSwimmingStrokeCount = totalSwimmingStrokeCount?.doubleValue(for: unit) {
+            return "\(totalSwimmingStrokeCount) \(unit.unitString)"
+        }
+        return "-"
     }
 
     public var dateIntervalDescription: String {
