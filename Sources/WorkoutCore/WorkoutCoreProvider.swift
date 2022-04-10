@@ -57,7 +57,6 @@ public final class WorkoutCoreProvider: ObservableObject {
                   return nil
               }
 
-        // second async call
         var locations: [WorkoutRouteData] = []
         for workoutRoute in workoutRoutes {
             let seriesLocations = try await self.geLocationData(route: workoutRoute)
