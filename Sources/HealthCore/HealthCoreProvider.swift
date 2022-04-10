@@ -338,11 +338,11 @@ extension HealthCoreProvider {
 }
 
 public extension HealthCoreProvider {
-    func getDataShortened(from samples: [QuantityData]) -> [QuantityData] {
+    func getQuantitiveDataShortened(from samples: [QuantityData]) -> [QuantityData] {
           if samples.count < 36 {
               return samples
           }
-        let interpolatedSamples = self.getHeartRateDataInterpolated(from: samples)
+        let interpolatedSamples = self.getQuantitiveDataInterpolated(from: samples)
         var shortHeartSamples: [QuantityData] = []
 
         for index in stride(from: 0, to: interpolatedSamples.count, by: Int.Stride(Double.Stride(ceil(Double(interpolatedSamples.count) / 36.0)))) {
@@ -351,16 +351,14 @@ public extension HealthCoreProvider {
         return shortHeartSamples
       }
 
-    /// Interpolated health data to handle missing values
+    /// Interpolated quantitive data to handle missing values
     /// Fills data for every second
-    func getHeartRateDataInterpolated(from samples: [QuantityData]) -> [QuantityData] {
-        var heartBeatArray: [QuantityData] = []
+    func getQuantitiveDataInterpolated(from samples: [QuantityData]) -> [QuantityData] {
+        var resultArray: [QuantityData] = []
 
             for (index, item) in samples.enumerated() {
-
-
                 // converts HR recording into double
-                let currentHeartBeatRecording = item.value
+                let currentRecordingValue = item.value
 
                 // ignores first value in the array for out of bounds error
                 if (index != 0) {
@@ -370,12 +368,11 @@ public extension HealthCoreProvider {
                     let intervalUntillNextRecording = round(item.dateInterval.start.timeIntervalSince(samples[index-1].dateInterval.end))
                     let previousItemSample = samples[index-1]
                     // converts HR recording into double
-                    let previousHeartBeatRecording = previousItemSample.value
+                    let previousRecordingValue = previousItemSample.value
 
                     // gets the absolute value change in heart rate between current value and previous available heart rate recording
-                    let manipulationHeartBeatValue = (currentHeartBeatRecording - previousHeartBeatRecording)/intervalUntillNextRecording
-                    var manipulationHeartBeatValueVariation = manipulationHeartBeatValue
-                    let calendar = Calendar.current
+                    let manipulationValue = (currentRecordingValue - previousRecordingValue)/intervalUntillNextRecording
+                    var manipulationValueVariation = manipulationValue
 
                     var i = 1
 
@@ -383,18 +380,18 @@ public extension HealthCoreProvider {
                     while (i < Int(intervalUntillNextRecording)) {
 
                         // creates a new date.
-                        let newDate = calendar.date(byAdding: .second, value: i, to: previousItemSample.dateInterval.end)!
+                        let newDate = Calendar.current.date(byAdding: .second, value: i, to: previousItemSample.dateInterval.end)!
 
                         // adds the HR increase amount to the previous value
-                        let newBpm = previousHeartBeatRecording + manipulationHeartBeatValueVariation
+                        let newBpm = previousRecordingValue + manipulationValueVariation
 
-                        let synthesisedHeartSample = QuantityData(
+                        let synthesisedSample = QuantityData(
                             value: newBpm,
                             dateInterval: .init(start: newDate, end: newDate)
                         )
 
-                        heartBeatArray.append(synthesisedHeartSample)
-                        manipulationHeartBeatValueVariation += manipulationHeartBeatValue
+                        resultArray.append(synthesisedSample)
+                        manipulationValueVariation += manipulationValue
                         i+=1
 
                         /* Example:
@@ -409,20 +406,19 @@ public extension HealthCoreProvider {
                          11:01:05am = 75
                         */
                     }
-
                 }
 
-                let synthesisedHeartSample = QuantityData(
-                    value: currentHeartBeatRecording,
+                let synthesisedSample = QuantityData(
+                    value: currentRecordingValue,
                     dateInterval: item.dateInterval)
 
-                heartBeatArray.append(synthesisedHeartSample)
+                resultArray.append(synthesisedSample)
             }
 
             // Watch produces inauthentic results when calebrating: ignore the first 5 values
-            if (heartBeatArray.count > 5) {
-                heartBeatArray.removeFirst(5)
+            if (resultArray.count > 5) {
+                resultArray.removeFirst(5)
             }
-            return heartBeatArray
+            return resultArray
         }
 }

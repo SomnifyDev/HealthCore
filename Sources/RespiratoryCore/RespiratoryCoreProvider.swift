@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  RespiratoryCoreProvider.swift
 //  
 //
 //  Created by Никита Казанцев on 10.04.2022.
@@ -10,7 +10,7 @@ import HealthCore
 import HealthKit
 import Logger
 
-// MARK: - EnergyCoreProvider
+// MARK: - RespiratoryCoreProvider
 
 public final class RespiratoryCoreProvider: ObservableObject {
 
@@ -27,7 +27,7 @@ public final class RespiratoryCoreProvider: ObservableObject {
 
     // MARK: - Public methods
 
-    /// Returns simple energy burn data of the user with it's (measurment) `value` and `recordingDate`
+    /// Returns simple breath data of the user with it's (measurment) `value` and `recordingDate`
     public func getRespiratoryData(
         dateInterval: DateInterval,
         ascending: Bool = true,
@@ -53,9 +53,9 @@ public final class RespiratoryCoreProvider: ObservableObject {
 
         switch arrayModification {
         case .interpolate:
-            return self.healthCoreProvider.getHeartRateDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
+            return self.healthCoreProvider.getQuantitiveDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
         case .shorten:
-            return self.healthCoreProvider.getDataShortened(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
+            return self.healthCoreProvider.getQuantitiveDataShortened(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
         case .none:
             return self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin())
         }

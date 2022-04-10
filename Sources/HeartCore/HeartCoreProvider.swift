@@ -80,9 +80,9 @@ public final class HeartCoreProvider: ObservableObject {
 
         switch arrayModification {
         case .interpolate:
-            return self.healthCoreProvider.getHeartRateDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
+            return self.healthCoreProvider.getQuantitiveDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
         case .shorten:
-            return self.healthCoreProvider.getDataShortened(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
+            return self.healthCoreProvider.getQuantitiveDataShortened(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
         case .none:
             return self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin())
         }

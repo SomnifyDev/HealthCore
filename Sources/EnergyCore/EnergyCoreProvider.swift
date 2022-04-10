@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  EnergyCoreProvider.swift
 //  
 //
 //  Created by Никита Казанцев on 08.04.2022.
@@ -53,9 +53,9 @@ public final class EnergyCoreProvider: ObservableObject {
 
         switch arrayModification {
         case .interpolate:
-            return self.healthCoreProvider.getHeartRateDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
+            return self.healthCoreProvider.getQuantitiveDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
         case .shorten:
-            return self.healthCoreProvider.getDataShortened(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
+            return self.healthCoreProvider.getQuantitiveDataShortened(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
         case .none:
             return self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie())
         }
