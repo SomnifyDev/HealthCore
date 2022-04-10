@@ -11,11 +11,6 @@ public enum HeartCoreProviderError: Error {
     case heartbeatSeriesQueryError(Error)
 }
 
-public struct HeartbeatData {
-    public let value: Double
-    public let recordingDate: Date
-}
-
 public struct HeartbeatSeries {
     public let timeSinceSeriesStart: TimeInterval
     public let precededByGap: Bool
@@ -66,8 +61,9 @@ public final class HeartCoreProvider: ObservableObject {
         ascending: Bool = true,
         limit: Int = HKObjectQueryNoLimit,
         author: HealthCoreProvider.BundleAuthor = .all,
-        queryOptions: HKQueryOptions = []
-    ) async throws -> [HeartbeatData]? {
+        queryOptions: HKQueryOptions = [],
+        arrayModification: ArrayModifyType = .none
+    ) async throws -> [QuantityData]? {
         guard
             let heartbeatData = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRate),
@@ -76,11 +72,20 @@ public final class HeartCoreProvider: ObservableObject {
                 limit: limit,
                 author: author,
                 queryOptions: queryOptions
-            ) as? [HKQuantitySample]
+            ) as? [HKQuantitySample],
+            !heartbeatData.isEmpty
         else {
             return nil
         }
-        return fetchHeartbeatData(from: heartbeatData)
+
+        switch arrayModification {
+        case .interpolate:
+            return self.healthCoreProvider.getQuantitiveDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
+        case .shorten:
+            return self.healthCoreProvider.getQuantitiveDataShortened(from: self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin()))
+        case .none:
+            return self.healthCoreProvider.makeQuantityData(from: heartbeatData, unit: .countMin())
+        }
     }
     
     /// Returns heart rate variability indicator during the concrete period of time
@@ -95,7 +100,8 @@ public final class HeartCoreProvider: ObservableObject {
             let samples = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRateVariabilitySDNN),
                 dateInterval: dateInterval
-            ) as? [HKQuantitySample]
+            ) as? [HKQuantitySample],
+            !samples.isEmpty
         else {
             return nil
         }
@@ -134,7 +140,8 @@ public final class HeartCoreProvider: ObservableObject {
             let samples = try await self.healthCoreProvider.readData(
                 sampleType: .seriesType(type: .heartbeat()),
                 dateInterval: dateInterval
-            ) as? [HKHeartbeatSeriesSample]
+            ) as? [HKHeartbeatSeriesSample],
+                !samples.isEmpty
         else {
             return nil
         }
@@ -175,14 +182,4 @@ public final class HeartCoreProvider: ObservableObject {
             }
         }
     }
-    
-    private func fetchHeartbeatData(from samples: [HKQuantitySample]) -> [HeartbeatData] {
-        return samples.map {
-            HeartbeatData(
-                value: $0.quantity.doubleValue(for: .countMin()),
-                recordingDate: $0.startDate
-            )
-        }
-    }
-    
 }
