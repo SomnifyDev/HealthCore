@@ -2,7 +2,7 @@
 //  File.swift
 //  
 //
-//  Created by Никита Казанцев on 08.04.2022.
+//  Created by Никита Казанцев on 10.04.2022.
 //
 
 import Foundation
@@ -12,7 +12,7 @@ import Logger
 
 // MARK: - EnergyCoreProvider
 
-public final class EnergyCoreProvider: ObservableObject {
+public final class RespiratoryCoreProvider: ObservableObject {
 
     // MARK: - Private properties
 
@@ -28,7 +28,7 @@ public final class EnergyCoreProvider: ObservableObject {
     // MARK: - Public methods
 
     /// Returns simple energy burn data of the user with it's (measurment) `value` and `recordingDate`
-    public func getActiveEnergyBurnData(
+    public func getRespiratoryData(
         dateInterval: DateInterval,
         ascending: Bool = true,
         limit: Int = HKObjectQueryNoLimit,
@@ -37,15 +37,15 @@ public final class EnergyCoreProvider: ObservableObject {
         arrayModification: ArrayModifyType = .none
     ) async throws -> [QuantityData]? {
         guard
-            let energyData = try await self.healthCoreProvider.readData(
-                sampleType: .quantityType(forIdentifier: .activeEnergyBurned),
+            let respiratoryData = try await self.healthCoreProvider.readData(
+                sampleType: .quantityType(forIdentifier: .respiratoryRate),
                 dateInterval: dateInterval,
                 ascending: ascending,
                 limit: limit,
                 author: author,
                 queryOptions: queryOptions
             ) as? [HKQuantitySample],
-            !energyData.isEmpty
+            !respiratoryData.isEmpty
         else {
             return nil
         }
@@ -53,11 +53,11 @@ public final class EnergyCoreProvider: ObservableObject {
 
         switch arrayModification {
         case .interpolate:
-            return self.healthCoreProvider.getHeartRateDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
+            return self.healthCoreProvider.getHeartRateDataInterpolated(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
         case .shorten:
-            return self.healthCoreProvider.getDataShortened(from: self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie()))
+            return self.healthCoreProvider.getDataShortened(from: self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin()))
         case .none:
-            return self.healthCoreProvider.makeQuantityData(from: energyData, unit: .kilocalorie())
+            return self.healthCoreProvider.makeQuantityData(from: respiratoryData, unit: .countMin())
         }
     }
 }

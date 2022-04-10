@@ -72,7 +72,8 @@ public final class HeartCoreProvider: ObservableObject {
                 limit: limit,
                 author: author,
                 queryOptions: queryOptions
-            ) as? [HKQuantitySample]
+            ) as? [HKQuantitySample],
+            !heartbeatData.isEmpty
         else {
             return nil
         }
@@ -99,7 +100,8 @@ public final class HeartCoreProvider: ObservableObject {
             let samples = try await self.healthCoreProvider.readData(
                 sampleType: .quantityType(forIdentifier: .heartRateVariabilitySDNN),
                 dateInterval: dateInterval
-            ) as? [HKQuantitySample]
+            ) as? [HKQuantitySample],
+            !samples.isEmpty
         else {
             return nil
         }
@@ -138,7 +140,8 @@ public final class HeartCoreProvider: ObservableObject {
             let samples = try await self.healthCoreProvider.readData(
                 sampleType: .seriesType(type: .heartbeat()),
                 dateInterval: dateInterval
-            ) as? [HKHeartbeatSeriesSample]
+            ) as? [HKHeartbeatSeriesSample],
+                !samples.isEmpty
         else {
             return nil
         }

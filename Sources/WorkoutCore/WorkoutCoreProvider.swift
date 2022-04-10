@@ -38,7 +38,8 @@ public final class WorkoutCoreProvider: ObservableObject {
                 limit: limit,
                 author: author,
                 queryOptions: queryOptions
-            )  as? [HKWorkout]
+            )  as? [HKWorkout],
+            !workoutSamples.isEmpty
         else {
             return nil
         }
@@ -52,7 +53,7 @@ public final class WorkoutCoreProvider: ObservableObject {
 
     private func getWorkoutRouteDate(for workout: HKWorkout) async throws -> [WorkoutRouteData]? {
         guard let workoutRoutes = try await self.getWorkoutRoute(for: workout),
-              workoutRoutes.count > 0 else {
+              !workoutRoutes.isEmpty else {
                   return nil
               }
 
