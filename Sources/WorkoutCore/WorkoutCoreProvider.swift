@@ -79,7 +79,12 @@ public final class WorkoutCoreProvider: ObservableObject {
         let byWorkout = HKQuery.predicateForObjects(from: workout)
 
         let samples = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[HKSample], Error>) in
-            self.healthCoreProvider.healthStore.execute(HKAnchoredObjectQuery(type: HKSeriesType.workoutRoute(), predicate: byWorkout, anchor: nil, limit: HKObjectQueryNoLimit, resultsHandler: { (query, samples, deletedObjects, anchor, error) in
+            self.healthCoreProvider.healthStore.execute(HKAnchoredObjectQuery(
+                type: HKSeriesType.workoutRoute(),
+                predicate: byWorkout,
+                anchor: nil,
+                limit: HKObjectQueryNoLimit,
+                resultsHandler: { (query, samples, deletedObjects, anchor, error) in
                 if let hasError = error {
                     continuation.resume(throwing: hasError)
                     return
@@ -149,7 +154,6 @@ public final class WorkoutCoreProvider: ObservableObject {
                 dateInterval: .init(start: sample.startDate, end: sample.endDate),
                 arrayModification: .interpolate
             )
-
         } catch {
             routeData = nil
             heartInterpolatedData = nil
@@ -168,6 +172,5 @@ public final class WorkoutCoreProvider: ObservableObject {
             rawSample: sample
         )
     }
-
 
 }
