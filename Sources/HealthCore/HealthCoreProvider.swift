@@ -308,7 +308,6 @@ extension HealthCoreProvider {
         }
     }
 
-
     public func makeQuantityData(from samples: [HKQuantitySample], unit: HKUnit) -> [QuantityData] {
         return samples.map {
             QuantityData(
@@ -338,87 +337,78 @@ extension HealthCoreProvider {
 }
 
 public extension HealthCoreProvider {
+
     func getQuantitiveDataShortened(from samples: [QuantityData]) -> [QuantityData] {
-          if samples.count < 36 {
-              return samples
-          }
+        if samples.count < 36 {
+            return samples
+        }
         let interpolatedSamples = self.getQuantitiveDataInterpolated(from: samples)
         var shortHeartSamples: [QuantityData] = []
 
         for index in stride(from: 0, to: interpolatedSamples.count, by: Int.Stride(Double.Stride(ceil(Double(interpolatedSamples.count) / 36.0)))) {
-              shortHeartSamples.append(interpolatedSamples[index])
-          }
+            shortHeartSamples.append(interpolatedSamples[index])
+        }
         return shortHeartSamples
-      }
+    }
 
     /// Interpolated quantitive data to handle missing values
     /// Fills data for every second
     func getQuantitiveDataInterpolated(from samples: [QuantityData]) -> [QuantityData] {
         var resultArray: [QuantityData] = []
 
-            for (index, item) in samples.enumerated() {
-                // converts HR recording into double
-                let currentRecordingValue = item.value
+        for (index, item) in samples.enumerated() {
+            let currentRecordingValue = item.value
 
-                // ignores first value in the array for out of bounds error
-                if (index != 0) {
+            if (index != 0) {
+                // finds the next time in samples where a heartrate is recording by taking the time difference in seconds
+                // between the current value and the value before this
+                let intervalUntillNextRecording = round(item.dateInterval.start.timeIntervalSince(samples[index-1].dateInterval.end))
+                let previousItemSample = samples[index-1]
 
-                    // finds the next time in self.heartSamples where a heartrate is recording by taking the time difference in seconds
-                    // between the current value and the value before this
-                    let intervalUntillNextRecording = round(item.dateInterval.start.timeIntervalSince(samples[index-1].dateInterval.end))
-                    let previousItemSample = samples[index-1]
-                    // converts HR recording into double
-                    let previousRecordingValue = previousItemSample.value
+                let previousRecordingValue = previousItemSample.value
 
-                    // gets the absolute value change in heart rate between current value and previous available heart rate recording
-                    let manipulationValue = (currentRecordingValue - previousRecordingValue)/intervalUntillNextRecording
-                    var manipulationValueVariation = manipulationValue
+                // gets the absolute value change in heart rate between current value and previous available heart rate recording
+                let manipulationValue = (currentRecordingValue - previousRecordingValue) / intervalUntillNextRecording
+                var manipulationValueVariation = manipulationValue
 
-                    var i = 1
+                var i = 1
 
-                    // starts interpolating the data
-                    while (i < Int(intervalUntillNextRecording)) {
+                // starts interpolating the data
+                while (i < Int(intervalUntillNextRecording)) {
+                    let newDate = Calendar.current.date(byAdding: .second, value: i, to: previousItemSample.dateInterval.end)!
+                    let newBpm = previousRecordingValue + manipulationValueVariation
 
-                        // creates a new date.
-                        let newDate = Calendar.current.date(byAdding: .second, value: i, to: previousItemSample.dateInterval.end)!
+                    let synthesisedSample = QuantityData(
+                        value: newBpm,
+                        dateInterval: .init(start: newDate, end: newDate)
+                    )
 
-                        // adds the HR increase amount to the previous value
-                        let newBpm = previousRecordingValue + manipulationValueVariation
+                    resultArray.append(synthesisedSample)
 
-                        let synthesisedSample = QuantityData(
-                            value: newBpm,
-                            dateInterval: .init(start: newDate, end: newDate)
-                        )
+                    manipulationValueVariation += manipulationValue
+                    i+=1
 
-                        resultArray.append(synthesisedSample)
-                        manipulationValueVariation += manipulationValue
-                        i+=1
-
-                        /* Example:
-                         Say a BPM was recorded at time 11:00:01am of 70bpm
-                         And the next BPM was recorded at time 11:00:05am of 75bpm (which is 4 seconds later)
-                         The bpm has increased by 5
-                         therefore 5 - 1 = 4, there are 3 spaces to fill, so 4/3 = 1.33
-                         11:01:01am = 70
-                         11:01:02am = 71.3
-                         11:01:03am = 72.6
-                         11:01:04am = 73.9
-                         11:01:05am = 75
-                        */
-                    }
+                    /* Example:
+                     Say a BPM was recorded at time 11:00:01am of 70bpm
+                     And the next BPM was recorded at time 11:00:05am of 75bpm (which is 4 seconds later)
+                     The bpm has increased by 5
+                     therefore 5 - 1 = 4, there are 3 spaces to fill, so 4/3 = 1.33
+                     11:01:01am = 70
+                     11:01:02am = 71.3
+                     11:01:03am = 72.6
+                     11:01:04am = 73.9
+                     11:01:05am = 75
+                     */
                 }
-
-                let synthesisedSample = QuantityData(
-                    value: currentRecordingValue,
-                    dateInterval: item.dateInterval)
-
-                resultArray.append(synthesisedSample)
             }
 
-            // Watch produces inauthentic results when calebrating: ignore the first 5 values
-            if (resultArray.count > 5) {
-                resultArray.removeFirst(5)
-            }
-            return resultArray
+            let synthesisedSample = QuantityData(
+                value: currentRecordingValue,
+                dateInterval: item.dateInterval)
+
+            resultArray.append(synthesisedSample)
         }
+        return resultArray
+    }
+
 }
