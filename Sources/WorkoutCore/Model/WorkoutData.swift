@@ -153,7 +153,7 @@ extension WorkoutData {
     public var totalDistanceDescription: String? {
         let unit = HKUnit.meter()
         if let totalDistance = totalDistance?.doubleValue(for: unit) {
-            return "\(Int(totalDistance)) \(unit.unitString)"
+            return "\(String(format:"%.2f", totalDistance)) \(unit.unitString)"
         }
         return nil
     }
@@ -161,7 +161,7 @@ extension WorkoutData {
     public var totalEnergyBurnedDescription: String? {
         let unit = HKUnit.kilocalorie()
         if let totalEnergyBurned = totalEnergyBurned?.doubleValue(for: unit) {
-            return "\(totalEnergyBurned) \(unit.unitString)"
+            return "\(String(format:"%.2f", totalEnergyBurned)) \(unit.unitString)"
         }
         return nil
     }
@@ -201,7 +201,7 @@ extension WorkoutData {
     /// average speed in meters per second
     public var averageSpeedDescription: String? {
         if let averageSpeed = self.averageSpeed {
-            return String(Int(averageSpeed))
+            return String(format:"%.2f", averageSpeed)
         }
         return nil
     }
@@ -209,7 +209,7 @@ extension WorkoutData {
     /// maximum speed in meters per second
     public var maximumSpeedDescription: String? {
         if let maximumSpeed = self.maximumSpeed {
-            return String(Int(maximumSpeed))
+            return String(format:"%.2f", maximumSpeed)
         }
         return nil
     }
@@ -219,7 +219,7 @@ extension WorkoutData {
     /// average Metabolic Equivalent of Task (METs) during a workout. kcal/(kg*hr)
     public var averageMETsDescription: String? {
         if let averageMETs = self.averageMETs {
-            return String((averageMETs))
+            return String(String(format:"%.2f", averageMETs))
         }
         return nil
     }
@@ -275,7 +275,7 @@ extension WorkoutData {
     /// indicates the cumulative elevation ascended during a workout, meters.
     public var elevationAscendedDescription: String? {
         if let elevationAscended = self.elevationAscended {
-            return String(Int(elevationAscended))
+            return String(String(format:"%.2f", elevationAscended))
         }
         return nil
     }
@@ -283,7 +283,7 @@ extension WorkoutData {
     /// indicates the cumulative elevation descended during a workout, meters.
     public var elevationdescendedDescription: String? {
         if let elevationdescended = self.elevationdescended {
-            return String(Int(elevationdescended))
+            return String(String(format:"%.2f", elevationdescended))
         }
         return nil
     }
